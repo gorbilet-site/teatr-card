@@ -1,0 +1,1859 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Интерактивная карта театров Санкт-Петербурга от Горбилета"
+    />
+    <title>Театральная карта Петербурга — Горбилет</title>
+    
+    <style>
+:root {
+  --red: #ff3d3d;
+  --black: #151111;
+  --paper: #f7f1e9;
+  --paper-light: #fffaf4;
+  --gray: #7e746d;
+  font-family: Inter, Arial, sans-serif;
+  color: var(--black);
+  background: var(--paper);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 47px, rgba(72, 52, 39, 0.055) 48px),
+    var(--paper);
+}
+
+body.drawer-open {
+  overflow: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ============================================================
+   Шапка
+   ============================================================ */
+.topbar {
+  position: sticky;
+  z-index: 900;
+  top: 0;
+  display: grid;
+  min-height: 80px;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 32px;
+  padding: 0 clamp(20px, 4vw, 70px);
+  color: white;
+  background: #070707;
+}
+
+.brand {
+  display: block;
+  width: 150px;
+  overflow: hidden;
+}
+
+.brand img,
+footer img {
+  display: block;
+  width: 100%;
+  mix-blend-mode: screen;
+}
+
+.topbar nav {
+  display: flex;
+  gap: 28px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.topbar nav a {
+  position: relative;
+  padding: 4px 0;
+}
+
+.topbar nav a::after {
+  content: '';
+  position: absolute;
+  right: 100%;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--red);
+  transition: right 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.topbar nav a:hover::after {
+  right: 0;
+}
+
+.topbar-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-self: end;
+  gap: 10px;
+  padding: 11px 18px;
+  color: white;
+  background: var(--red);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.topbar-cta:hover {
+  box-shadow: 0 10px 26px rgba(255, 61, 61, 0.4);
+  transform: translateY(-2px);
+}
+
+.topbar-cta span {
+  font-size: 22px;
+  line-height: 1;
+}
+
+/* ============================================================
+   Первый экран
+   ============================================================ */
+.hero {
+  position: relative;
+  display: grid;
+  min-height: 540px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(30px, 5vw, 70px);
+  padding: clamp(55px, 7vw, 100px) clamp(28px, 8vw, 120px);
+  overflow: hidden;
+  color: white;
+  background:
+    radial-gradient(circle at 55% 10%, rgba(255, 61, 61, 0.17), transparent 36%),
+    linear-gradient(140deg, #340c10, #0b0909 50%, #171313);
+}
+
+/* кулисы: вертикальные складки бархата, уходящие в темноту сцены */
+.hero::before,
+.hero::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: clamp(58px, 12vw, 200px);
+  opacity: 0.96;
+  pointer-events: none;
+}
+
+.hero::before {
+  left: 0;
+  clip-path: polygon(0 0, 100% 0, 64% 100%, 0 100%);
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.62)),
+    linear-gradient(180deg, rgba(255, 61, 61, 0.14), transparent 26%, rgba(0, 0, 0, 0.34)),
+    repeating-linear-gradient(90deg, #33090f 0, #741321 24px, #33090f 48px);
+}
+
+.hero::after {
+  right: 0;
+  clip-path: polygon(36% 0, 100% 0, 100% 100%, 0 100%);
+  background:
+    linear-gradient(270deg, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.62)),
+    linear-gradient(180deg, rgba(255, 61, 61, 0.14), transparent 26%, rgba(0, 0, 0, 0.34)),
+    repeating-linear-gradient(270deg, #33090f 0, #741321 24px, #33090f 48px);
+}
+
+/* тень, которую кулисы отбрасывают на сцену */
+.hero-wings {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.5), transparent clamp(90px, 18vw, 300px)),
+    linear-gradient(270deg, rgba(0, 0, 0, 0.5), transparent clamp(90px, 18vw, 300px));
+}
+
+.hero-copy,
+.ticket {
+  position: relative;
+  z-index: 1;
+}
+
+.hero h1 {
+  max-width: 950px;
+  margin: 0 0 22px;
+  font-size: clamp(48px, 6.2vw, 94px);
+  font-weight: 800;
+  line-height: 0.91;
+  letter-spacing: -0.065em;
+}
+
+.hero p {
+  max-width: 560px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: clamp(16px, 1.25vw, 20px);
+  line-height: 1.5;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  margin-top: 34px;
+  flex-wrap: wrap;
+}
+
+.hero-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 26px;
+  color: white;
+  background: var(--red);
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 800;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.hero-button:hover {
+  box-shadow: 0 14px 34px rgba(255, 61, 61, 0.42);
+  transform: translateY(-2px);
+}
+
+.hero-link {
+  position: relative;
+  padding-bottom: 3px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.hero-link:hover {
+  border-color: var(--red);
+  color: white;
+}
+
+/* ============================================================
+   Билет — вытянутый, с корешком и перфорацией
+   ============================================================ */
+.ticket {
+  --stub: 112px;
+  --notch: 15px;
+  display: grid;
+  width: clamp(330px, 36vw, 470px);
+  grid-template-columns: var(--stub) minmax(0, 1fr);
+  color: var(--black);
+  background: var(--paper-light);
+  border-radius: 16px;
+  box-shadow: 0 30px 64px rgba(0, 0, 0, 0.46);
+  transform: rotate(-3deg);
+  animation: ticket-float 7s ease-in-out infinite;
+  -webkit-mask-image:
+    radial-gradient(circle var(--notch) at var(--stub) 0, transparent 98%, black 100%),
+    radial-gradient(circle var(--notch) at var(--stub) 100%, transparent 98%, black 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    radial-gradient(circle var(--notch) at var(--stub) 0, transparent 98%, black 100%),
+    radial-gradient(circle var(--notch) at var(--stub) 100%, transparent 98%, black 100%);
+  mask-composite: intersect;
+}
+
+@keyframes ticket-float {
+  0%,
+  100% {
+    transform: rotate(-3deg) translateY(0);
+  }
+  50% {
+    transform: rotate(-2.1deg) translateY(-11px);
+  }
+}
+
+.ticket-stub {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 2px;
+  padding: 26px 10px;
+  color: white;
+  background: var(--red);
+  border-radius: 16px 0 0 16px;
+  text-align: center;
+}
+
+.ticket-stub-word {
+  margin-bottom: 8px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.ticket-stub b {
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+}
+
+.ticket-stub small {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.ticket-main {
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  padding: 26px 26px 22px;
+  border-left: 2px dashed rgba(21, 17, 17, 0.24);
+}
+
+.ticket-kicker {
+  color: var(--red);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.ticket-title {
+  font-size: clamp(24px, 2.4vw, 31px);
+  font-weight: 800;
+  line-height: 0.96;
+  letter-spacing: -0.045em;
+}
+
+.ticket-meta {
+  display: flex;
+  gap: 20px;
+  padding-top: 4px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ticket-meta i {
+  display: block;
+  color: var(--gray);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.ticket-barcode {
+  height: 30px;
+  margin-top: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--black) 0 2px,
+    transparent 2px 5px,
+    var(--black) 5px 6px,
+    transparent 6px 9px,
+    var(--black) 9px 12px,
+    transparent 12px 14px,
+    var(--black) 14px 15px,
+    transparent 15px 19px
+  );
+  opacity: 0.86;
+}
+
+/* ============================================================
+   Карта
+   ============================================================ */
+.map-section {
+  padding: clamp(65px, 8vw, 110px) clamp(14px, 4vw, 64px) 30px;
+}
+
+.section-heading {
+  display: grid;
+  max-width: 1500px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 510px);
+  align-items: end;
+  gap: 48px;
+  margin: 0 auto 34px;
+}
+
+.section-heading h2,
+.about h2 {
+  margin: 0;
+  font-size: clamp(44px, 5vw, 76px);
+  line-height: 0.95;
+  letter-spacing: -0.055em;
+}
+
+.section-heading p {
+  margin: 0 0 4px;
+  color: var(--gray);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.map-frame {
+  position: relative;
+  max-width: 1500px;
+  height: min(760px, 78vh);
+  min-height: 610px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #d7cec3;
+  border: 1px solid rgba(71, 51, 40, 0.18);
+  border-radius: 34px;
+  box-shadow: 0 28px 80px rgba(55, 31, 21, 0.13);
+}
+
+.map-canvas {
+  position: absolute;
+  z-index: 1; /* собственный контекст наложения, иначе легенда уедет под слои карты */
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  isolation: isolate;
+}
+
+/* подложку тонируем под бумажную палитру, метки остаются красными */
+.leaflet-tile-pane {
+  filter: grayscale(0.32) sepia(0.16) contrast(0.96) brightness(1.03);
+}
+
+.leaflet-container {
+  background: #d7cec3;
+  font-family: Inter, Arial, sans-serif;
+}
+
+.leaflet-control-attribution {
+  color: var(--gray) !important;
+  background: rgba(255, 250, 244, 0.86) !important;
+  font-size: 10px !important;
+}
+
+.marker-wrap {
+  width: auto !important;
+  height: auto !important;
+}
+
+.marker {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  white-space: nowrap;
+  transform: translate(-50%, -100%);
+}
+
+.marker-pin {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  flex: none;
+  place-items: center;
+  color: white;
+  background: var(--red);
+  border: 3px solid #fff8ef;
+  border-radius: 50% 50% 50% 12px;
+  box-shadow: 0 7px 20px rgba(115, 17, 23, 0.46);
+  transform: rotate(-45deg);
+  cursor: pointer;
+  font: 900 12px/1 Inter, Arial, sans-serif;
+  transition: transform 170ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 170ms ease;
+}
+
+.marker-pin i {
+  width: 9px;
+  height: 9px;
+  background: white;
+  border-radius: 50%;
+}
+
+.marker-label {
+  max-width: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--paper-light);
+  border-radius: 999px;
+  box-shadow: 0 8px 22px rgba(52, 29, 20, 0.2);
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: max-width 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease,
+    padding 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.marker:hover,
+.marker:focus-within {
+  z-index: 9;
+}
+
+.marker:hover .marker-pin,
+.marker-pin:focus-visible {
+  outline: none;
+  box-shadow: 0 9px 26px rgba(115, 17, 23, 0.62), 0 0 0 4px white;
+  transform: rotate(-45deg) scale(1.13);
+}
+
+.marker:hover .marker-label,
+.marker:focus-within .marker-label {
+  max-width: 260px;
+  padding: 8px 14px;
+  opacity: 1;
+}
+
+.map-status {
+  position: absolute;
+  z-index: 8;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  padding: 24px;
+  color: white;
+  background: #151111;
+  text-align: center;
+}
+
+.map-status[hidden] {
+  display: none;
+}
+
+.map-status strong {
+  font-size: 24px;
+}
+
+.map-status span {
+  max-width: 460px;
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1.5;
+}
+
+.map-status code {
+  padding: 2px 7px;
+  color: white;
+  background: rgba(255, 61, 61, 0.24);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.map-legend {
+  position: absolute;
+  z-index: 6;
+  left: 24px;
+  bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px 10px 10px;
+  background: rgba(255, 250, 244, 0.94);
+  border: 1px solid rgba(89, 62, 50, 0.14);
+  border-radius: 999px;
+  box-shadow: 0 8px 28px rgba(52, 29, 20, 0.14);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.map-legend b {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  background: var(--red);
+  border: 2px solid #fff8ef;
+  border-radius: 50% 50% 50% 8px;
+  transform: rotate(-45deg);
+  box-shadow: 0 3px 10px rgba(115, 17, 23, 0.35);
+}
+
+.map-legend b::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  background: white;
+  border-radius: 50%;
+}
+
+.map-zoom {
+  position: absolute;
+  z-index: 6;
+  right: 24px;
+  bottom: 52px;
+  display: grid;
+  overflow: hidden;
+  background: rgba(255, 250, 244, 0.94);
+  border: 1px solid rgba(89, 62, 50, 0.14);
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(52, 29, 20, 0.14);
+}
+
+.map-zoom[hidden] {
+  display: none;
+}
+
+.map-zoom button {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: 700 22px/1 Inter, Arial, sans-serif;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.map-zoom button:first-child {
+  border-bottom: 1px solid rgba(89, 62, 50, 0.14);
+}
+
+.map-zoom button:hover {
+  color: white;
+  background: var(--red);
+}
+
+/* ============================================================
+   Список сцен
+   ============================================================ */
+.stage-index {
+  padding: clamp(60px, 7vw, 96px) clamp(14px, 4vw, 64px) clamp(50px, 6vw, 90px);
+}
+
+.stage-grid {
+  display: grid;
+  max-width: 1500px;
+  grid-template-columns: repeat(auto-fill, minmax(370px, 1fr));
+  gap: 12px;
+  margin: 0 auto;
+}
+
+.stage-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22px;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 22px;
+  background: var(--paper-light);
+  border: 1px solid rgba(71, 51, 40, 0.14);
+  border-radius: 18px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.stage-card:hover,
+.stage-card:focus-visible {
+  outline: none;
+  border-color: var(--red);
+  box-shadow: 0 14px 34px rgba(55, 31, 21, 0.12);
+  transform: translateY(-3px);
+}
+
+.stage-text {
+  min-width: 0;
+}
+
+.stage-card strong {
+  display: block;
+  color: var(--black);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+.stage-card em {
+  display: block;
+  margin-top: 4px;
+  color: var(--gray);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 500;
+}
+
+.stage-go {
+  color: var(--red);
+  font-size: 17px;
+  font-style: normal;
+  font-weight: 900;
+  transition: transform 160ms ease;
+}
+
+.stage-card:hover .stage-go {
+  transform: translateX(4px);
+}
+
+/* ============================================================
+   Финальный блок
+   ============================================================ */
+.about {
+  position: relative;
+  display: grid;
+  max-width: 1250px;
+  justify-items: center;
+  margin: 0 auto 92px;
+  padding: 76px clamp(28px, 8vw, 120px);
+  color: white;
+  background: var(--red);
+  border-radius: 38px;
+  text-align: center;
+}
+
+.about::before {
+  content: '';
+  position: absolute;
+  inset: 22px 30px;
+  pointer-events: none;
+  border: 2px dashed rgba(255, 255, 255, 0.4);
+  border-radius: 24px;
+}
+
+.about > * {
+  position: relative;
+}
+
+.about p {
+  max-width: 740px;
+  margin: 24px 0 30px;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.about > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 22px;
+  color: var(--black);
+  background: white;
+  border-radius: 999px;
+  font-weight: 850;
+  transition: transform 170ms ease;
+}
+
+.about > a:hover {
+  transform: translateY(-3px);
+}
+
+footer {
+  display: grid;
+  min-height: 170px;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 30px;
+  padding: 36px clamp(24px, 5vw, 76px);
+  color: white;
+  background: #070707;
+}
+
+footer img {
+  width: 145px;
+}
+
+footer p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 14px;
+}
+
+footer > span {
+  justify-self: end;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 13px;
+}
+
+/* ============================================================
+   Карточка театра
+   ============================================================ */
+.drawer-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  visibility: hidden;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity 220ms ease, visibility 220ms ease;
+}
+
+.drawer-backdrop.open {
+  visibility: visible;
+  opacity: 1;
+}
+
+.drawer {
+  position: fixed;
+  z-index: 1001;
+  top: 0;
+  right: 0;
+  width: min(540px, 100%);
+  height: 100dvh;
+  overflow-y: auto;
+  background: var(--paper-light);
+  box-shadow: -22px 0 70px rgba(0, 0, 0, 0.28);
+  transform: translateX(105%);
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.drawer.open {
+  transform: translateX(0);
+}
+
+.drawer-close {
+  position: absolute;
+  z-index: 2;
+  top: 20px;
+  right: 20px;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  place-items: center;
+  color: white;
+  background: rgba(0, 0, 0, 0.44);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 30px;
+  transition: background 160ms ease, transform 220ms ease;
+}
+
+.drawer-close:hover {
+  background: var(--red);
+  transform: rotate(90deg);
+}
+
+.drawer-head {
+  position: relative;
+  padding: 64px 42px 46px;
+  color: white;
+  background: linear-gradient(145deg, #2d0b0e, #0d0a0a 58%);
+}
+
+/* перфорация — карточка тоже «отрывной билет» */
+.drawer-head::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -9px;
+  left: 0;
+  height: 18px;
+  background: radial-gradient(circle 9px at 9px 50%, var(--paper-light) 98%, transparent 100%)
+    left center / 26px 100% repeat-x;
+}
+
+.drawer-head > span,
+.drawer-label {
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.drawer-head h2 {
+  margin: 12px 0 14px;
+  font-size: clamp(34px, 6vw, 52px);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+
+.drawer-head p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.4;
+}
+
+.drawer-body {
+  display: grid;
+  gap: 34px;
+  padding: 38px 42px 54px;
+}
+
+.drawer-body section > p {
+  margin: 12px 0 0;
+  color: #5f554e;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.performance-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.performance-list a {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: 10px;
+  padding: 15px;
+  background: white;
+  border: 1px solid #e5dbd2;
+  border-radius: 16px;
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+
+.performance-list a:hover {
+  border-color: var(--red);
+  transform: translateY(-2px);
+}
+
+.performance-list a > span {
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.performance-list strong {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.all-tickets {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 17px 20px;
+  color: white;
+  background: var(--red);
+  border-radius: 16px;
+  font-weight: 850;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.all-tickets:hover {
+  box-shadow: 0 14px 32px rgba(255, 61, 61, 0.38);
+  transform: translateY(-2px);
+}
+
+.drawer-note {
+  margin: -22px 0 0;
+  color: #94877d;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* ============================================================
+   Адаптив
+   ============================================================ */
+@media (max-width: 1080px) {
+  .hero {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .ticket {
+    width: min(470px, 100%);
+    margin-top: 6px;
+  }
+}
+
+@media (max-width: 900px) {
+  .topbar {
+    grid-template-columns: 1fr auto;
+  }
+
+  .topbar nav {
+    display: none;
+  }
+
+  .hero {
+    min-height: 430px;
+    padding: 55px 28px 66px;
+  }
+
+  .section-heading {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .map-frame {
+    height: auto;
+    min-height: 62vh;
+  }
+
+  .stage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .about {
+    margin-right: 4.5vw;
+    margin-left: 4.5vw;
+  }
+}
+
+@media (max-width: 620px) {
+  .topbar {
+    min-height: 70px;
+    padding: 0 16px;
+  }
+
+  .brand {
+    width: 132px;
+  }
+
+  .topbar-cta {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .hero {
+    min-height: auto;
+  }
+
+  /* на узком экране кулисы уже, чтобы не наезжать на заголовок */
+  .hero::before,
+  .hero::after {
+    width: clamp(30px, 9vw, 42px);
+  }
+
+  .hero h1 {
+    font-size: clamp(44px, 15vw, 66px);
+  }
+
+  .hero p {
+    max-width: 100%;
+  }
+
+  .hero-actions {
+    gap: 18px;
+    margin-top: 28px;
+  }
+
+  .ticket {
+    --stub: 84px;
+    --notch: 13px;
+    transform: rotate(-2deg);
+    animation: none;
+  }
+
+  .ticket-stub b {
+    font-size: 34px;
+  }
+
+  .ticket-main {
+    padding: 22px 20px 20px;
+  }
+
+  .map-section {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .stage-index {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .section-heading {
+    padding: 0 8px;
+  }
+
+  .section-heading h2,
+  .about h2 {
+    font-size: 43px;
+  }
+
+  .section-heading p {
+    font-size: 15px;
+  }
+
+  .map-frame {
+    min-height: 54vh;
+    border-radius: 24px;
+  }
+
+  .map-legend {
+    right: 74px;
+    bottom: 20px;
+    left: 14px;
+    font-size: 12px;
+  }
+
+  .map-zoom {
+    right: 14px;
+    bottom: 44px;
+  }
+
+  .stage-card {
+    grid-template-columns: minmax(0, 1fr) 18px;
+    gap: 12px;
+    padding: 17px 18px;
+  }
+
+  .about {
+    margin-bottom: 58px;
+    padding: 60px 30px;
+    border-radius: 28px;
+  }
+
+  .about p {
+    font-size: 16px;
+  }
+
+  footer {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+
+  footer > span {
+    justify-self: start;
+  }
+
+  .drawer-head,
+  .drawer-body {
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+</style>
+    <style>
+      :root {
+        --plan-land: #f4ede3; --plan-water: #d5cab6; --plan-park: #e4e2cc;
+        --plan-road: #fdfaf4; --plan-road-edge: #e6dbc9;
+        --plan-grid: rgba(120, 96, 74, 0.06); --plan-label: rgba(118, 106, 96, 0.8);
+      }
+      .plan { position: absolute; inset: 0; display: block; }
+      .plan text { font-family: Inter, Arial, sans-serif; text-transform: uppercase;
+        paint-order: stroke fill; stroke: rgba(255,250,244,.9); stroke-width: 4px; stroke-linejoin: round; }
+      .plan-markers { position: absolute; inset: 0; }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="Горбилет — на главную">
+        <img src="data:image/png;base64,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" alt="Горбилет" />
+      </a>
+      <nav aria-label="Основная навигация">
+        <a href="#map">Карта театров</a>
+        <a href="#stages">Все сцены</a>
+        <a href="#about">О проекте</a>
+      </nav>
+      <a class="topbar-cta" href="#map">Найти театр <span>›</span></a>
+    </header>
+
+    <main>
+      <section class="hero" id="top">
+        <div class="hero-wings" aria-hidden="true"></div>
+        <div class="hero-copy">
+          <h1>Театральная<br />карта Петербурга</h1>
+          <p>
+            Выбирайте сцену на карте, читайте её историю и находите спектакль
+            на сегодняшний вечер.
+          </p>
+          <div class="hero-actions">
+            <a class="hero-button" href="#map">Открыть карту <span>⌖</span></a>
+            <a class="hero-link" href="#stages">Список всех театров</a>
+          </div>
+        </div>
+
+        <!-- Билет: вытянутый, с корешком, перфорацией и штрихкодом -->
+        <div class="ticket" aria-hidden="true">
+          <div class="ticket-stub">
+            <span class="ticket-stub-word">Горбилет</span>
+            <b>20</b>
+            <small>сцен</small>
+          </div>
+          <div class="ticket-main">
+            <span class="ticket-kicker">Санкт-Петербург · сезон 2026</span>
+            <strong class="ticket-title">Театральная карта</strong>
+            <div class="ticket-meta">
+              <span><i>Ряд</i>любой</span>
+              <span><i>Место</i>ваше</span>
+              <span><i>Начало</i>19:00</span>
+            </div>
+            <div class="ticket-barcode"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="map-section" id="map" aria-labelledby="map-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="map-title">Карта театров</h2>
+          </div>
+          <p>
+            Нажмите на красную метку — откроется карточка с описанием театра и
+            подборкой спектаклей.
+          </p>
+        </div>
+
+        <div class="map-frame">
+          <div
+            id="theater-map"
+            class="map-canvas"
+            role="application"
+            aria-label="Интерактивная карта театров Санкт-Петербурга"
+          ></div>
+
+          <div class="map-status" id="map-status" role="status">
+            <strong>Поднимаем занавес…</strong>
+            <span>Загружаем карту Петербурга</span>
+          </div>
+
+          <div class="map-legend"><b></b> Театр — нажмите, чтобы открыть афишу</div>
+
+          <div class="map-zoom" id="map-zoom" hidden>
+            <button type="button" data-zoom="in" aria-label="Приблизить">+</button>
+            <button type="button" data-zoom="out" aria-label="Отдалить">−</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="stage-index" id="stages" aria-labelledby="stages-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="stages-title">Все сцены списком</h2>
+          </div>
+          <p>
+            Академические залы, камерные подвалы и дворцы культуры — двадцать
+            площадок города. Нажмите на строку, чтобы открыть карточку.
+          </p>
+        </div>
+        <div class="stage-grid" id="stage-grid"></div>
+      </section>
+
+      <section class="about" id="about">
+        <h2>Вечер начинается здесь</h2>
+        <p>
+          На карте собраны большие академические сцены, камерные театры и
+          культурные площадки. В каждой карточке — короткая история и три
+          спектакля, которые выбирают зрители.
+        </p>
+        <a href="#map">Открыть карту <span>⌖</span></a>
+      </section>
+    </main>
+
+    <footer>
+      <img src="data:image/png;base64,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" alt="Горбилет" />
+      <p>Гид по театральному Петербургу</p>
+      <span>© 2026 Горбилет</span>
+    </footer>
+
+    <div class="drawer-backdrop" id="drawer-backdrop"></div>
+    <aside
+      class="drawer"
+      id="theater-drawer"
+      aria-hidden="true"
+      aria-labelledby="drawer-title"
+    >
+      <button class="drawer-close" id="drawer-close" type="button" aria-label="Закрыть">
+        ×
+      </button>
+      <div class="drawer-head">
+        <h2 id="drawer-title"></h2>
+        <p id="drawer-address"></p>
+      </div>
+      <div class="drawer-body">
+        <section>
+          <span class="drawer-label">О театре</span>
+          <p id="drawer-description"></p>
+        </section>
+        <section>
+          <span class="drawer-label">Выбор зрителей</span>
+          <div class="performance-list" id="performance-list"></div>
+        </section>
+        <a class="all-tickets" id="all-tickets" target="_blank" rel="noreferrer">
+          Все билеты театра <b>↗</b>
+        </a>
+        <p class="drawer-note">Ссылка откроется на сайте Горбилета в новой вкладке.</p>
+      </div>
+    </aside>
+    <script>
+window.THEATERS = [
+  {
+    id: 1,
+    name: 'Театр имени Ленсовета',
+    address: 'Владимирский просп., 12',
+    coordinates: [59.930056, 30.348189],
+    url: 'https://gorbilet.ru/go/iwFDoF',
+    description:
+      'Театр в Доме Корсаковых начал свой путь в 1933 году как «Новый театр» под руководством ученика Мейерхольда — Исаака Кролля. Сегодня на сцене можно увидеть как легенд театрального Петербурга, так и звёзд нового поколения.',
+    performances: [
+      { title: 'Премьерный спектакль «Квадратура круга»', url: 'https://gorbilet.ru/go/x7iZt0' },
+      { title: 'Премьерный спектакль «Мой век»', url: 'https://gorbilet.ru/go/lAr8Of' },
+      { title: 'Спектакль «Костюмер»', url: 'https://gorbilet.ru/go/vG9bhP' },
+    ],
+  },
+  {
+    id: 2,
+    name: 'Мариинский театр',
+    address: 'Театральная площадь, 1',
+    coordinates: [59.925426, 30.295863],
+    url: 'https://gorbilet.ru/go/D7mUR2',
+    description:
+      'Не только один из старейших в стране, но и один из ведущих музыкальных театров в России и мире, созданный по указу Екатерины Великой. В репертуаре собраны лучшие образцы классического балета и мировой оперы.',
+    performances: [
+      { title: '«Чудесный мандарин. Замок герцога Синяя Борода»', url: 'https://gorbilet.ru/go/z0Bdzc' },
+      { title: 'Балет Театра балета им. Л. Якобсона «Дон Кихот»', url: 'https://gorbilet.ru/go/UehLnW' },
+      { title: 'Опера «Любовь к трём апельсинам»', url: 'https://gorbilet.ru/go/Phdc6w' },
+    ],
+  },
+  {
+    id: 3,
+    name: 'Александринский театр',
+    address: 'площадь Островского, 6',
+    coordinates: [59.931774, 30.336278],
+    url: 'https://gorbilet.ru/go/I0Kgiy',
+    description:
+      'Старейший национальный театр России и выдающийся архитектурный памятник классицизма с императорскими интерьерами. Постановки именитых режиссёров соединяют классические традиции и смелые эксперименты.',
+    performances: [
+      { title: 'Премьера спектакля «Последний год»', url: 'https://gorbilet.ru/go/bePXPh' },
+      { title: 'Премьера спектакля «Сентиментальное путешествие»', url: 'https://gorbilet.ru/go/YUbngF' },
+      { title: 'Спектакль «На дне»', url: 'https://gorbilet.ru/go/Jjg4DI' },
+    ],
+  },
+  {
+    id: 4,
+    name: 'Театр им. В. Ф. Комиссаржевской',
+    address: 'ул. Итальянская, 21',
+    coordinates: [59.936086, 30.335371],
+    url: 'https://gorbilet.ru/go/tARnQT',
+    description:
+      'Современную летопись «театр над магазином» ведёт с тяжёлых блокадных дней 1942 года, хотя первая сцена в здании «Пассажа» начала принимать гостей ещё в 1860-х. В репертуаре — классические и современные авторы.',
+    performances: [
+      { title: 'Премьера «Три мушкетёра, или Подвески королевы»', url: 'https://gorbilet.ru/go/hJ1Q10' },
+      { title: 'Музыкальный спектакль «Трёхгрошовая история»', url: 'https://gorbilet.ru/go/Wh53Uv' },
+      { title: 'Спектакль «Мизантроп»', url: 'https://gorbilet.ru/go/vvllJL' },
+    ],
+  },
+  {
+    id: 5,
+    name: 'Театр комедии имени Акимова',
+    address: 'Невский проспект, 56',
+    coordinates: [59.934162, 30.337811],
+    url: 'https://gorbilet.ru/go/u7GC3v',
+    description:
+      'В знаменитом доме купцов Елисеевых уже почти век работает Театр комедии имени Акимова. В 1935 году Николай Акимов полностью обновил труппу и уже через год сделал театр одним из лучших в стране.',
+    performances: [
+      { title: 'Премьера спектакля «Чао»', url: 'https://gorbilet.ru/go/qu8QRi' },
+      { title: 'Спектакль «Не всё коту масленица»', url: 'https://gorbilet.ru/go/EaAOsx' },
+      { title: 'Спектакль «Тень»', url: 'https://gorbilet.ru/go/qApj4S' },
+    ],
+  },
+  {
+    id: 6,
+    name: 'Дом Актёра им. Станиславского',
+    address: 'Невский проспект, 84–86',
+    coordinates: [59.932649, 30.350498],
+    url: 'https://gorbilet.ru/go/WE2i3i',
+    description:
+      'Молодая, но яркая театральная площадка, появившаяся 1 сентября 2023 года. Художественный руководитель Владимир Глазков объединяет актёров из России, Казахстана, Эстонии, Сербии, Беларуси и Узбекистана.',
+    performances: [
+      { title: 'Премьера спектакля «Тартюф»', url: 'https://gorbilet.ru/go/nttjH1' },
+      { title: 'Спектакль «Любовь втроём»', url: 'https://gorbilet.ru/go/aw7a5W' },
+      { title: 'Спектакль «Сон в летнюю ночь»', url: 'https://gorbilet.ru/go/cJANcR' },
+    ],
+  },
+  {
+    id: 7,
+    name: 'Театр «Буфф»',
+    address: 'ул. Шаумяна, 22, лит. А',
+    coordinates: [59.931652, 30.417306],
+    url: 'https://gorbilet.ru/go/wD1Nga',
+    description:
+      'Основанный в 1983 году Исааком Штокбантом, он стал первым театром, где в одном здании уживаются классическая драма, современный мюзикл, эстрадные шоу и даже оперные постановки для детей.',
+    performances: [
+      { title: 'Премьера спектакля «Старший сын»', url: 'https://gorbilet.ru/go/pSAFoP' },
+      { title: 'Мюзикл «Эзоп»', url: 'https://gorbilet.ru/go/fw0Ppm' },
+      { title: 'Музыкальный спектакль «Свои люди»', url: 'https://gorbilet.ru/go/oHwput' },
+    ],
+  },
+  {
+    id: 8,
+    name: 'Эрмитажный театр Государственного Эрмитажа',
+    address: 'Дворцовая набережная, 34',
+    coordinates: [59.9417, 30.317036],
+    url: 'https://gorbilet.ru/go/RvgEDy',
+    description:
+      'Изысканная жемчужина XVIII века, построенная по приказу Екатерины Великой. Классический интерьер сохранил элегантность: мраморные полуколонны, античный амфитеатр и барельефы с музыкантами и поэтами.',
+    performances: [
+      { title: 'Балет «Вне времени. Шедевры Леонида Якобсона»', url: 'https://gorbilet.ru/go/8MG6WM' },
+      { title: 'Балет «Щелкунчик»', url: 'https://gorbilet.ru/go/9gab17' },
+      { title: 'Балет «Лебединое озеро»', url: 'https://gorbilet.ru/go/T6rsdf' },
+    ],
+  },
+  {
+    id: 9,
+    name: 'Санкт-Петербургский театр музыкальной комедии',
+    address: 'ул. Итальянская, 13',
+    coordinates: [59.93603, 30.332954],
+    url: 'https://gorbilet.ru/go/aaPS7d',
+    description:
+      'Театр музыкальной комедии был открыт в 1910 году и на британский манер получил имя «Палас-театр». Здесь ставили оперетты с участием лучших певцов начала XX века.',
+    performances: [
+      { title: 'Премьера рок-мюзикла «Два капитана»', url: 'https://gorbilet.ru/go/M3ZKOL' },
+      { title: 'Мюзикл «Пётр I»', url: 'https://gorbilet.ru/go/M7Soj2' },
+      { title: 'Мюзикл «Белый. Петербург»', url: 'https://gorbilet.ru/go/ElkBOH' },
+    ],
+  },
+  {
+    id: 10,
+    name: 'Театр эстрады имени Аркадия Райкина',
+    address: 'ул. Большая Конюшенная, 27',
+    coordinates: [59.937017, 30.322309],
+    url: 'https://gorbilet.ru/go/hLOwRp',
+    description:
+      'В 1939 году здесь открылся Ленинградский театр эстрады и миниатюр. Аркадий Райкин был художественным руководителем 40 лет, а сегодня его традиции продолжает Юрий Гальцев.',
+    performances: [
+      { title: 'Спектакль «История одного офиса»', url: 'https://gorbilet.ru/go/XGkqdB' },
+      { title: '«Здрасьте, я ваша тётя!» с Андреем Носковым', url: 'https://gorbilet.ru/go/tTcsgj' },
+      { title: 'Спектакль «Давным-давно»', url: 'https://gorbilet.ru/go/wFVJqN' },
+    ],
+  },
+  {
+    id: 11,
+    name: 'Театр на Васильевском',
+    address: 'Средний пр-т В.О., 48',
+    coordinates: [59.940907, 30.271752],
+    url: 'https://gorbilet.ru/go/vUVf3l',
+    description:
+      'История Театра на Васильевском началась с экспериментальной студии при рок-группе «Секрет», а сегодня театр стал одной из самых разножанровых сцен города.',
+    performances: [
+      { title: 'Спектакль «Петербург»', url: 'https://gorbilet.ru/go/jGc58w' },
+      { title: 'Спектакль «Самая счастливая»', url: 'https://gorbilet.ru/go/7OzY1D' },
+      { title: 'Спектакль «Я шагаю по Москве»', url: 'https://gorbilet.ru/go/G8b338' },
+    ],
+  },
+  {
+    id: 12,
+    name: 'Театр «Суббота»',
+    address: 'ул. Звенигородская, 30',
+    coordinates: [59.91835, 30.342961],
+    url: 'https://gorbilet.ru/go/4AvxTJ',
+    description:
+      'В театре «Суббота», который славится живыми экспериментальными постановками, начинали свой путь Константин Хабенский, Григорий Гладков, Семён Спивак и Татьяна Абрамова.',
+    performances: [
+      { title: 'Спектакль «Друг мой»', url: 'https://gorbilet.ru/go/w2fXKf' },
+      { title: 'Спектакль «Гудбай Китти»', url: 'https://gorbilet.ru/go/69oAeJ' },
+      { title: 'Спектакль «Денискины рассказы»', url: 'https://gorbilet.ru/go/meN1vN' },
+    ],
+  },
+  {
+    id: 13,
+    name: 'Театр Karlsson Haus на Фурштатской',
+    address: 'ул. Фурштатская, 30',
+    coordinates: [59.945612, 30.356876],
+    url: 'https://gorbilet.ru/go/7jISU4',
+    description:
+      'Альтернативная сцена детского театра Karlsson Haus, где проводят спектакли для взрослых.',
+    performances: [
+      { title: 'Спектакль «Ваня»', url: 'https://gorbilet.ru/go/fryWHb' },
+      { title: 'Спектакль «Сказки Шута и Короля»', url: 'https://gorbilet.ru/go/jgwTTE' },
+      { title: 'Спектакль «Про честное слово»', url: 'https://gorbilet.ru/go/QfwC5M' },
+    ],
+  },
+  {
+    id: 14,
+    name: 'Театр «Странник»',
+    address: 'ул. Цветочная, 16',
+    coordinates: [59.886844, 30.33184],
+    url: 'https://gorbilet.ru/go/tQGxZK',
+    description:
+      'Православный драматический театр «Странник», открытый в 2007 году, обращается к произведениям русской классики и современности через призму христианских ценностей.',
+    performances: [
+      { title: 'Спектакль «Дядя Ваня»', url: 'https://gorbilet.ru/go/sOkfqZ' },
+      { title: 'Спектакль «Маленькие трагедии»', url: 'https://gorbilet.ru/go/eNejGq' },
+      { title: 'Спектакль «Идиот»', url: 'https://gorbilet.ru/go/h5iEWD' },
+    ],
+  },
+  {
+    id: 15,
+    name: 'Театр «Балтийский дом»',
+    address: 'Александровский парк, 4',
+    coordinates: [59.955115, 30.311664],
+    url: 'https://gorbilet.ru/go/1Xg3Wu',
+    description:
+      '«Балтийский дом» был стартовой площадкой будущих знаменитых артистов. Многие легенды трудятся здесь до сих пор, а афиша театра всегда пестрит яркими именами.',
+    performances: [
+      { title: 'Творческий вечер Екатерины Климовой «Манифест красивой женщины»', url: 'https://gorbilet.ru/go/gWTGhc' },
+      { title: 'Спектакль «Love Letters (Любовные письма)»', url: 'https://gorbilet.ru/go/f8FvrQ' },
+      { title: 'Спектакль «Зал ожидания»', url: 'https://gorbilet.ru/go/NQJaiI' },
+    ],
+  },
+  {
+    id: 16,
+    name: 'Театральная долина (Артмуза)',
+    address: '13-я линия В.О., 70, галерея Арт-Муза, 2 этаж',
+    coordinates: [59.945474, 30.26541],
+    url: 'https://gorbilet.ru/go/1upuE8',
+    description:
+      'Здесь специализируются на спектаклях, но также на сцене периодически проходят праздники, семинары и тренинги.',
+    performances: [
+      { title: 'Спектакль «Когда петуху отрубают голову…»', url: 'https://gorbilet.ru/go/hLWwFk' },
+      { title: 'Спектакль «Японские народные сказки»', url: 'https://gorbilet.ru/go/EOIDw7' },
+      { title: 'Спектакль «Заповедник Довлатова»', url: 'https://gorbilet.ru/go/n558qc' },
+    ],
+  },
+  {
+    id: 17,
+    name: 'Дом культуры Выборгский',
+    address: 'ул. Комиссара Смирнова, 15, литер А',
+    coordinates: [59.963052, 30.348378],
+    url: 'https://gorbilet.ru/go/JH2oTG',
+    description:
+      'ДК Выборгский — одна из самых известных культурных площадок города. Афиша включает концерты, драматические постановки и спектакли московских трупп.',
+    performances: [
+      { title: '«Маленькие комедии» с Марией Ароновой и Сергеем Шакуровым', url: 'https://gorbilet.ru/go/JHN2px' },
+      { title: '«Мастер и Маргарита» с Екатериной Климовой', url: 'https://gorbilet.ru/go/ZKrkMB' },
+      { title: '«Ты где-то рядом…» с Фёдором Добронравовым', url: 'https://gorbilet.ru/go/qLlUMz' },
+    ],
+  },
+  {
+    id: 18,
+    name: 'Дворец культуры имени Ленсовета',
+    address: 'Каменноостровский пр., 42',
+    coordinates: [59.966782, 30.309607],
+    url: 'https://gorbilet.ru/go/aXulx1',
+    description:
+      'Кроме зрительного зала, здесь располагается оранжерея и торговые точки, которые можно посетить во время антракта; часть здания занимает вместительный кинотеатр.',
+    performances: [
+      { title: '«Варшавская мелодия» с Мариной Александровой и Антоном Васильевым', url: 'https://gorbilet.ru/go/rcPgU6' },
+      { title: '«Сеанс гипноза для семейной пары»', url: 'https://gorbilet.ru/go/EzQp82' },
+      { title: '«Палата бизнес-класса» с Семёном Стругачёвым и Ольгой Прокофьевой', url: 'https://gorbilet.ru/go/xi0KqE' },
+    ],
+  },
+  {
+    id: 19,
+    name: 'Дворец искусств Ленинградской области',
+    address: 'пл. Стачек, 4',
+    coordinates: [59.90052, 30.276073],
+    url: 'https://gorbilet.ru/go/Ph97fd',
+    description:
+      'Здание Дворца получило Гран-при на Всемирной выставке в Париже в 1937 году и позже стало памятником конструктивизма.',
+    performances: [
+      { title: 'Иммерсивный спектакль-шоу «Сезон Дождей»', url: 'https://gorbilet.ru/go/miHQO9' },
+      { title: 'Спектакль «Папа» с Сергеем Маковецким', url: 'https://gorbilet.ru/go/p7WLWb' },
+      { title: '«Танцуй со мной» с Татьяной Васильевой и Ефимом Шифриным', url: 'https://gorbilet.ru/go/APZ7Hb' },
+    ],
+  },
+  {
+    id: 20,
+    name: 'Дворец культуры железнодорожников',
+    address: 'ул. Тамбовская, 63',
+    coordinates: [59.909355, 30.351387],
+    url: 'https://gorbilet.ru/go/Hm8hjZ',
+    description:
+      'ДК железнодорожников, или Театр графини Паниной, — старинный особняк, где больше ста лет назад появился первый в России передвижной общедоступный театр.',
+    performances: [
+      { title: 'Спектакль «Номер 13»', url: 'https://gorbilet.ru/go/7GIfWk' },
+      { title: 'Спектакль «Слишком женатый таксист»', url: 'https://gorbilet.ru/go/LgbKIU' },
+      { title: '«Ночь её откровений» с Лизой Арзамасовой и Игорем Лифановым', url: 'https://gorbilet.ru/go/zIUCDJ' },
+    ],
+  },
+];
+
+/* Схематичная география Петербурга для презентационного макета.
+   Координаты [широта, долгота]. Обводка рек задаётся в метрах. */
+window.SPB = {
+  gulf: [[59.8300,29.8000],[60.0400,29.8000],[60.0400,30.2280],[59.9900,30.2350],
+         [59.9760,30.2420],[59.9620,30.2450],[59.9480,30.2400],[59.9360,30.2330],
+         [59.9240,30.2300],[59.9120,30.2360],[59.9000,30.2440],[59.8850,30.2520],
+         [59.8600,30.2600],[59.8300,30.2650]],
+  parks: [
+    { c:[59.9553,30.3115], rx:900, ry:620 },   // Александровский парк
+    { c:[59.9445,30.3330], rx:520, ry:430 },   // Марсово поле / Летний сад
+    { c:[59.9470,30.3745], rx:620, ry:470 },   // Таврический сад
+    { c:[59.9740,30.2700], rx:1500, ry:800 },  // Крестовский / Елагин
+    { c:[59.9210,30.2950], rx:600, ry:420 }    // парк у Обводного
+  ],
+  rivers: [
+    { w:520, p:[[59.8620,30.5150],[59.8760,30.5000],[59.8860,30.4830],[59.8980,30.4720],
+                [59.9110,30.4680],[59.9220,30.4640],[59.9300,30.4540],[59.9355,30.4400],
+                [59.9395,30.4260],[59.9430,30.4120],[59.9470,30.4010],[59.9492,30.3870],
+                [59.9502,30.3710],[59.9500,30.3560],[59.9492,30.3440],[59.9478,30.3320],
+                [59.9452,30.3195],[59.9428,30.3105],[59.9448,30.3050]] },              // Нева
+    { w:430, p:[[59.9448,30.3050],[59.9405,30.2975],[59.9362,30.2865],[59.9330,30.2755],
+                [59.9300,30.2645],[59.9272,30.2525],[59.9252,30.2410],[59.9242,30.2300]] }, // Большая Нева
+    { w:300, p:[[59.9450,30.3045],[59.9482,30.2945],[59.9508,30.2825],[59.9532,30.2695],
+                [59.9552,30.2555],[59.9570,30.2400]] },                                 // Малая Нева
+    { w:260, p:[[59.9488,30.3405],[59.9558,30.3352],[59.9628,30.3300],[59.9700,30.3218],
+                [59.9760,30.3080],[59.9800,30.2930],[59.9820,30.2780]] },               // Большая Невка
+    { w:170, p:[[59.9642,30.3160],[59.9652,30.3020],[59.9662,30.2880],[59.9682,30.2740],
+                [59.9700,30.2600],[59.9712,30.2480]] },                                 // Малая Невка
+    { w:70,  p:[[59.9455,30.3370],[59.9410,30.3390],[59.9360,30.3420],[59.9310,30.3430],
+                [59.9260,30.3390],[59.9220,30.3300],[59.9190,30.3180],[59.9160,30.3050],
+                [59.9140,30.2900],[59.9150,30.2790]] },                                 // Фонтанка
+    { w:46,  p:[[59.9445,30.3350],[59.9420,30.3290],[59.9390,30.3230],[59.9355,30.3180],
+                [59.9320,30.3060],[59.9295,30.2950],[59.9280,30.2850],[59.9270,30.2760]] }, // Мойка
+    { w:34,  p:[[59.9420,30.3290],[59.9390,30.3270],[59.9350,30.3245],[59.9310,30.3170],
+                [59.9270,30.3080],[59.9230,30.3010],[59.9190,30.2920],[59.9160,30.2870]] }, // канал Грибоедова
+    { w:62,  p:[[59.9130,30.2610],[59.9110,30.2780],[59.9092,30.2980],[59.9082,30.3200],
+                [59.9080,30.3400],[59.9092,30.3600],[59.9112,30.3800],[59.9132,30.4000],
+                [59.9152,30.4200]] }                                                    // Обводный канал
+  ],
+  avenues: [
+    { w:38, p:[[59.9375,30.3095],[59.9355,30.3200],[59.9345,30.3250],[59.9335,30.3350],
+               [59.9325,30.3450],[59.9312,30.3600],[59.9295,30.3720],[59.9270,30.3820],
+               [59.9240,30.3890]] },                                                    // Невский
+    { w:34, p:[[59.9195,30.3195],[59.9100,30.3190],[59.9000,30.3195],[59.8900,30.3200],
+               [59.8800,30.3210],[59.8700,30.3215]] },                                  // Московский
+    { w:28, p:[[59.9370,30.3620],[59.9300,30.3580],[59.9220,30.3540],[59.9150,30.3500],
+               [59.9080,30.3450]] },                                                    // Лиговский
+    { w:30, p:[[59.9520,30.3190],[59.9580,30.3140],[59.9640,30.3090],[59.9700,30.3050],
+               [59.9760,30.3020]] },                                                    // Каменноостровский
+    { w:26, p:[[59.9490,30.2880],[59.9530,30.2960],[59.9570,30.3050],[59.9610,30.3140]] }, // Большой П.С.
+    { w:26, p:[[59.9340,30.2430],[59.9385,30.2570],[59.9420,30.2690],[59.9455,30.2810],
+               [59.9490,30.2920]] },                                                    // Средний В.О.
+    { w:26, p:[[59.9300,30.2480],[59.9340,30.2620],[59.9375,30.2740],[59.9410,30.2860],
+               [59.9445,30.2970]] },                                                    // Большой В.О.
+    { w:26, p:[[59.9480,30.3480],[59.9420,30.3470],[59.9360,30.3460],[59.9310,30.3450],
+               [59.9280,30.3400],[59.9250,30.3330],[59.9220,30.3270]] },                // Литейный — Владимирский — Загородный
+    { w:24, p:[[59.9430,30.3350],[59.9370,30.3260],[59.9310,30.3180],[59.9250,30.3060],
+               [59.9200,30.2980]] }                                                     // Садовая
+  ],
+  labels: [
+    { t:'ФИНСКИЙ ЗАЛИВ', at:[59.9180,30.2080], size:12, rot:0 },
+    { t:'НЕВА',          at:[59.9150,30.4470], size:15, rot:72 },
+    { t:'ВАСИЛЬЕВСКИЙ ОСТРОВ', at:[59.9330,30.2600], size:9,  rot:-27 },
+    { t:'ПЕТРОГРАДСКАЯ СТОРОНА', at:[59.9690,30.2810], size:9, rot:-8 },
+    { t:'ОБВОДНЫЙ КАНАЛ', at:[59.9048,30.3300], size:9, rot:2 }
+  ]
+};
+
+/* Презентационный макет: рисуем схему города вместо тайлов. */
+(function () {
+  const theaters = window.THEATERS;
+  const mapEl = document.querySelector('#theater-map');
+  const drawer = document.querySelector('#theater-drawer');
+  const backdrop = document.querySelector('#drawer-backdrop');
+  const closeButton = document.querySelector('#drawer-close');
+
+  /* ---------- карточка ---------- */
+  function openTheater(t) {
+    document.querySelector('#drawer-title').textContent = t.name;
+    document.querySelector('#drawer-address').textContent = `⌖ ${t.address}`;
+    document.querySelector('#drawer-description').textContent = t.description;
+    const list = document.querySelector('#performance-list');
+    list.replaceChildren();
+    t.performances.forEach((p, i) => {
+      const a = document.createElement('a');
+      a.href = p.url; a.target = '_blank'; a.rel = 'noreferrer';
+      a.innerHTML = `<span>${String(i + 1).padStart(2, '0')}</span><strong></strong><b>↗</b>`;
+      a.querySelector('strong').textContent = p.title;
+      list.append(a);
+    });
+    document.querySelector('#all-tickets').href = t.url;
+    drawer.classList.add('open'); backdrop.classList.add('open');
+    drawer.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('drawer-open');
+  }
+  function closeTheater() {
+    drawer.classList.remove('open'); backdrop.classList.remove('open');
+    drawer.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('drawer-open');
+  }
+  closeButton.addEventListener('click', closeTheater);
+  backdrop.addEventListener('click', closeTheater);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeTheater(); });
+
+  /* ---------- список сцен ---------- */
+  const grid = document.querySelector('#stage-grid');
+  theaters.forEach((t) => {
+    const c = document.createElement('button');
+    c.type = 'button'; c.className = 'stage-card';
+    c.innerHTML = `<span class="stage-text"><strong></strong><em></em></span><i class="stage-go">↗</i>`;
+    c.querySelector('strong').textContent = t.name;
+    c.querySelector('em').textContent = t.address;
+    c.addEventListener('click', () => openTheater(t));
+    grid.append(c);
+  });
+
+  /* ---------- проекция ---------- */
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const rad = (d) => (d * Math.PI) / 180;
+
+  function world(lat, lon, z) {
+    const scale = 256 * 2 ** z;
+    const s = Math.sin(rad(lat));
+    return {
+      x: ((lon + 180) / 360) * scale,
+      y: (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * scale,
+    };
+  }
+
+  function draw() {
+    const W = mapEl.clientWidth;
+    const H = mapEl.clientHeight;
+    if (!W || !H) return;
+
+    const lats = theaters.map((t) => t.coordinates[0]);
+    const lons = theaters.map((t) => t.coordinates[1]);
+    const bounds = { n: Math.max(...lats), s: Math.min(...lats), e: Math.max(...lons), w: Math.min(...lons) };
+    const padX = W < 700 ? 46 : 110;
+    const padY = W < 700 ? 60 : 90;
+
+    let z = 9;
+    for (let test = 9; test <= 16; test += 0.05) {
+      const a = world(bounds.n, bounds.w, test);
+      const b = world(bounds.s, bounds.e, test);
+      if (b.x - a.x > W - padX * 2 || b.y - a.y > H - padY * 2) break;
+      z = test;
+    }
+
+    const cLat = (bounds.n + bounds.s) / 2;
+    const cLon = (bounds.e + bounds.w) / 2;
+    const centre = world(cLat, cLon, z);
+    const mpp = (156543.03392 * Math.cos(rad(cLat))) / 2 ** z;
+
+    const P = (lat, lon) => {
+      const p = world(lat, lon, z);
+      return [W / 2 + p.x - centre.x, H / 2 + p.y - centre.y];
+    };
+    const m = (metres) => Math.max(1, metres / mpp);
+
+    /* сглаженная линия по точкам */
+    function smooth(points) {
+      const pts = points.map(([la, lo]) => P(la, lo));
+      if (pts.length < 3) return `M ${pts.map((p) => p.join(' ')).join(' L ')}`;
+      let d = `M ${pts[0][0]} ${pts[0][1]}`;
+      for (let i = 1; i < pts.length - 1; i += 1) {
+        const mx = (pts[i][0] + pts[i + 1][0]) / 2;
+        const my = (pts[i][1] + pts[i + 1][1]) / 2;
+        d += ` Q ${pts[i][0]} ${pts[i][1]} ${mx} ${my}`;
+      }
+      const last = pts[pts.length - 1];
+      d += ` T ${last[0]} ${last[1]}`;
+      return d;
+    }
+
+    const svg = document.createElementNS(SVGNS, 'svg');
+    svg.setAttribute('class', 'plan');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('width', W);
+    svg.setAttribute('height', H);
+
+    const add = (tag, attrs) => {
+      const el = document.createElementNS(SVGNS, tag);
+      Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+      svg.append(el);
+      return el;
+    };
+
+    /* суша */
+    add('rect', { x: 0, y: 0, width: W, height: H, fill: 'var(--plan-land)' });
+
+    /* мелкая сетка кварталов */
+    const step = Math.max(34, m(700));
+    for (let x = 0; x < W; x += step) add('line', { x1: x, y1: 0, x2: x, y2: H, stroke: 'var(--plan-grid)', 'stroke-width': 1 });
+    for (let y = 0; y < H; y += step) add('line', { x1: 0, y1: y, x2: W, y2: y, stroke: 'var(--plan-grid)', 'stroke-width': 1 });
+
+    /* залив */
+    add('polygon', {
+      points: window.SPB.gulf.map(([la, lo]) => P(la, lo).join(',')).join(' '),
+      fill: 'var(--plan-water)',
+    });
+
+    /* парки */
+    window.SPB.parks.forEach((p) => {
+      const [cx, cy] = P(p.c[0], p.c[1]);
+      add('ellipse', { cx, cy, rx: m(p.rx), ry: m(p.ry), fill: 'var(--plan-park)' });
+    });
+
+    /* улицы */
+    window.SPB.avenues.forEach((a) => {
+      const d = smooth(a.p);
+      add('path', {
+        d, fill: 'none', stroke: 'var(--plan-road-edge)',
+        'stroke-width': m(a.w) + 3.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+      });
+      add('path', {
+        d, fill: 'none', stroke: 'var(--plan-road)',
+        'stroke-width': m(a.w), 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+      });
+    });
+
+    /* реки */
+    window.SPB.rivers.forEach((r) => {
+      add('path', {
+        d: smooth(r.p), fill: 'none', stroke: 'var(--plan-water)',
+        'stroke-width': m(r.w), 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+      });
+    });
+
+    /* подписи */
+    window.SPB.labels.forEach((l) => {
+      const [x, y] = P(l.at[0], l.at[1]);
+      const t = add('text', {
+        x, y, fill: 'var(--plan-label)', 'font-size': l.size, 'font-weight': 700,
+        'letter-spacing': 2.2, 'text-anchor': 'middle',
+        transform: `rotate(${l.rot} ${x} ${y})`,
+      });
+      t.textContent = l.t;
+    });
+
+    const layer = document.createElement('div');
+    layer.className = 'plan-markers';
+
+    theaters.forEach((t) => {
+      const [x, y] = P(t.coordinates[0], t.coordinates[1]);
+      const wrap = document.createElement('div');
+      wrap.className = 'marker';
+      wrap.style.cssText = `position:absolute;left:${x}px;top:${y}px`;
+      const pin = document.createElement('button');
+      pin.type = 'button'; pin.className = 'marker-pin';
+      pin.setAttribute('aria-label', `Открыть карточку: ${t.name}`);
+      pin.innerHTML = '<i></i>';
+      pin.addEventListener('click', () => openTheater(t));
+      const label = document.createElement('span');
+      label.className = 'marker-label';
+      label.textContent = t.name;
+      wrap.append(pin, label);
+      layer.append(wrap);
+    });
+
+    mapEl.replaceChildren(svg, layer);
+  }
+
+  draw();
+  document.querySelector('#map-status').hidden = true;
+  let timer;
+  window.addEventListener('resize', () => { clearTimeout(timer); timer = setTimeout(draw, 120); });
+})();
+
+    </script>
+  </body>
+</html>
