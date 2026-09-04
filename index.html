@@ -720,15 +720,29 @@ footer img {
 }
 
 .stage-go {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
   color: var(--red);
-  font-size: 17px;
   font-style: normal;
-  font-weight: 900;
   transition: transform 160ms ease;
 }
 
 .stage-card:hover .stage-go {
   transform: translateX(4px);
+}
+
+.external-arrow {
+  display: block;
+  width: 17px;
+  height: 17px;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.25;
 }
 
 /* ============================================================
@@ -1311,7 +1325,10 @@ footer > span {
           <div class="performance-list" id="performance-list"></div>
         </section>
         <a class="all-tickets" id="all-tickets" target="_blank" rel="noreferrer">
-          Все билеты театра <b>↗</b>
+          Все билеты театра
+          <svg class="external-arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+            <path d="M4 12 12 4M6 4h6v6"></path>
+          </svg>
         </a>
       </div>
     </aside>
@@ -1600,6 +1617,8 @@ window.THEATERS = [
 ];
 
 /* Карточки театров и официальный виджет Яндекс Карт без API-ключа. */
+const externalArrowIcon = '<svg class="external-arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 12 12 4M6 4h6v6"></path></svg>';
+
 (function () {
   const theaters = window.THEATERS;
   const mapEl = document.querySelector('#theater-map');
@@ -1617,7 +1636,7 @@ window.THEATERS = [
     t.performances.forEach((p) => {
       const a = document.createElement('a');
       a.href = p.url; a.target = '_blank'; a.rel = 'noreferrer';
-      a.innerHTML = '<strong></strong><b>↗</b>';
+      a.innerHTML = `<strong></strong>${externalArrowIcon}`;
       a.querySelector('strong').textContent = p.title;
       list.append(a);
     });
@@ -1640,7 +1659,7 @@ window.THEATERS = [
   theaters.forEach((t) => {
     const c = document.createElement('button');
     c.type = 'button'; c.className = 'stage-card';
-    c.innerHTML = `<span class="stage-text"><strong></strong><em></em></span><i class="stage-go">↗</i>`;
+    c.innerHTML = `<span class="stage-text"><strong></strong><em></em></span><i class="stage-go">${externalArrowIcon}</i>`;
     c.querySelector('strong').textContent = t.name;
     c.querySelector('em').textContent = t.address;
     c.addEventListener('click', () => openTheater(t));
