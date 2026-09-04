@@ -432,100 +432,11 @@ footer img {
   position: absolute;
   z-index: 1; /* собственный контекст наложения, иначе легенда уедет под слои карты */
   inset: 0;
+  display: block;
   width: 100%;
   height: 100%;
+  border: 0;
   isolation: isolate;
-}
-
-/* подложку тонируем под бумажную палитру, метки остаются красными */
-.leaflet-tile-pane {
-  filter: grayscale(0.32) sepia(0.16) contrast(0.96) brightness(1.03);
-}
-
-.leaflet-container {
-  background: #d7cec3;
-  font-family: Inter, Arial, sans-serif;
-}
-
-.leaflet-control-attribution {
-  color: var(--gray) !important;
-  background: rgba(255, 250, 244, 0.86) !important;
-  font-size: 10px !important;
-}
-
-.marker-wrap {
-  width: auto !important;
-  height: auto !important;
-}
-
-.marker {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  white-space: nowrap;
-  transform: translate(-50%, -100%);
-}
-
-.marker-pin {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  flex: none;
-  place-items: center;
-  color: white;
-  background: var(--red);
-  border: 3px solid #fff8ef;
-  border-radius: 50% 50% 50% 12px;
-  box-shadow: 0 7px 20px rgba(115, 17, 23, 0.46);
-  transform: rotate(-45deg);
-  cursor: pointer;
-  font: 900 12px/1 Inter, Arial, sans-serif;
-  transition: transform 170ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 170ms ease;
-}
-
-.marker-pin i {
-  width: 9px;
-  height: 9px;
-  background: white;
-  border-radius: 50%;
-}
-
-.marker-label {
-  max-width: 0;
-  padding: 0;
-  overflow: hidden;
-  background: var(--paper-light);
-  border-radius: 999px;
-  box-shadow: 0 8px 22px rgba(52, 29, 20, 0.2);
-  font-size: 12.5px;
-  font-weight: 800;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: max-width 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease,
-    padding 260ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.marker:hover,
-.marker:focus-within {
-  z-index: 9;
-}
-
-.marker:hover .marker-pin,
-.marker-pin:focus-visible {
-  outline: none;
-  box-shadow: 0 9px 26px rgba(115, 17, 23, 0.62), 0 0 0 4px white;
-  transform: rotate(-45deg) scale(1.13);
-}
-
-.marker:hover .marker-label,
-.marker:focus-within .marker-label {
-  max-width: 260px;
-  padding: 8px 14px;
-  opacity: 1;
 }
 
 .map-status {
@@ -553,14 +464,6 @@ footer img {
   max-width: 460px;
   color: rgba(255, 255, 255, 0.62);
   line-height: 1.5;
-}
-
-.map-status code {
-  padding: 2px 7px;
-  color: white;
-  background: rgba(255, 61, 61, 0.24);
-  border-radius: 6px;
-  font-size: 13px;
 }
 
 .map-legend {
@@ -598,43 +501,6 @@ footer img {
   height: 7px;
   background: white;
   border-radius: 50%;
-}
-
-.map-zoom {
-  position: absolute;
-  z-index: 6;
-  right: 24px;
-  bottom: 52px;
-  display: grid;
-  overflow: hidden;
-  background: rgba(255, 250, 244, 0.94);
-  border: 1px solid rgba(89, 62, 50, 0.14);
-  border-radius: 16px;
-  box-shadow: 0 8px 28px rgba(52, 29, 20, 0.14);
-}
-
-.map-zoom[hidden] {
-  display: none;
-}
-
-.map-zoom button {
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  background: none;
-  border: 0;
-  cursor: pointer;
-  font: 700 22px/1 Inter, Arial, sans-serif;
-  transition: background 150ms ease, color 150ms ease;
-}
-
-.map-zoom button:first-child {
-  border-bottom: 1px solid rgba(89, 62, 50, 0.14);
-}
-
-.map-zoom button:hover {
-  color: white;
-  background: var(--red);
 }
 
 /* ============================================================
@@ -1150,17 +1016,6 @@ footer > span {
 }
 
 </style>
-    <style>
-      :root {
-        --plan-land: #f4ede3; --plan-water: #d5cab6; --plan-park: #e4e2cc;
-        --plan-road: #fdfaf4; --plan-road-edge: #e6dbc9;
-        --plan-grid: rgba(120, 96, 74, 0.06); --plan-label: rgba(118, 106, 96, 0.8);
-      }
-      .plan { position: absolute; inset: 0; display: block; }
-      .plan text { font-family: Inter, Arial, sans-serif; text-transform: uppercase;
-        paint-order: stroke fill; stroke: rgba(255,250,244,.9); stroke-width: 4px; stroke-linejoin: round; }
-      .plan-markers { position: absolute; inset: 0; }
-    </style>
   </head>
   <body>
     <header class="topbar">
@@ -1216,30 +1071,28 @@ footer > span {
             <h2 id="map-title">Карта театров</h2>
           </div>
           <p>
-            Нажмите на красную метку — откроется карточка с описанием театра и
-            подборкой спектаклей.
+            На Яндекс Карте отмечены двадцать театров. Подробности и подборки
+            спектаклей открываются в списке площадок ниже.
           </p>
         </div>
 
         <div class="map-frame">
-          <div
+          <iframe
             id="theater-map"
             class="map-canvas"
-            role="application"
-            aria-label="Интерактивная карта театров Санкт-Петербурга"
-          ></div>
+            title="Театры Санкт-Петербурга на Яндекс Карте"
+            loading="lazy"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+          ></iframe>
 
           <div class="map-status" id="map-status" role="status">
             <strong>Поднимаем занавес…</strong>
-            <span>Загружаем карту Петербурга</span>
+            <span>Загружаем Яндекс Карту</span>
           </div>
 
-          <div class="map-legend"><b></b> Театр — нажмите, чтобы открыть афишу</div>
+          <div class="map-legend"><b></b> 20 театров на Яндекс Карте</div>
 
-          <div class="map-zoom" id="map-zoom" hidden>
-            <button type="button" data-zoom="in" aria-label="Приблизить">+</button>
-            <button type="button" data-zoom="out" aria-label="Отдалить">−</button>
-          </div>
         </div>
       </section>
 
@@ -1586,75 +1439,7 @@ window.THEATERS = [
   },
 ];
 
-/* Схематичная география Петербурга для презентационного макета.
-   Координаты [широта, долгота]. Обводка рек задаётся в метрах. */
-window.SPB = {
-  gulf: [[59.8300,29.8000],[60.0400,29.8000],[60.0400,30.2280],[59.9900,30.2350],
-         [59.9760,30.2420],[59.9620,30.2450],[59.9480,30.2400],[59.9360,30.2330],
-         [59.9240,30.2300],[59.9120,30.2360],[59.9000,30.2440],[59.8850,30.2520],
-         [59.8600,30.2600],[59.8300,30.2650]],
-  parks: [
-    { c:[59.9553,30.3115], rx:900, ry:620 },   // Александровский парк
-    { c:[59.9445,30.3330], rx:520, ry:430 },   // Марсово поле / Летний сад
-    { c:[59.9470,30.3745], rx:620, ry:470 },   // Таврический сад
-    { c:[59.9740,30.2700], rx:1500, ry:800 },  // Крестовский / Елагин
-    { c:[59.9210,30.2950], rx:600, ry:420 }    // парк у Обводного
-  ],
-  rivers: [
-    { w:520, p:[[59.8620,30.5150],[59.8760,30.5000],[59.8860,30.4830],[59.8980,30.4720],
-                [59.9110,30.4680],[59.9220,30.4640],[59.9300,30.4540],[59.9355,30.4400],
-                [59.9395,30.4260],[59.9430,30.4120],[59.9470,30.4010],[59.9492,30.3870],
-                [59.9502,30.3710],[59.9500,30.3560],[59.9492,30.3440],[59.9478,30.3320],
-                [59.9452,30.3195],[59.9428,30.3105],[59.9448,30.3050]] },              // Нева
-    { w:430, p:[[59.9448,30.3050],[59.9405,30.2975],[59.9362,30.2865],[59.9330,30.2755],
-                [59.9300,30.2645],[59.9272,30.2525],[59.9252,30.2410],[59.9242,30.2300]] }, // Большая Нева
-    { w:300, p:[[59.9450,30.3045],[59.9482,30.2945],[59.9508,30.2825],[59.9532,30.2695],
-                [59.9552,30.2555],[59.9570,30.2400]] },                                 // Малая Нева
-    { w:260, p:[[59.9488,30.3405],[59.9558,30.3352],[59.9628,30.3300],[59.9700,30.3218],
-                [59.9760,30.3080],[59.9800,30.2930],[59.9820,30.2780]] },               // Большая Невка
-    { w:170, p:[[59.9642,30.3160],[59.9652,30.3020],[59.9662,30.2880],[59.9682,30.2740],
-                [59.9700,30.2600],[59.9712,30.2480]] },                                 // Малая Невка
-    { w:70,  p:[[59.9455,30.3370],[59.9410,30.3390],[59.9360,30.3420],[59.9310,30.3430],
-                [59.9260,30.3390],[59.9220,30.3300],[59.9190,30.3180],[59.9160,30.3050],
-                [59.9140,30.2900],[59.9150,30.2790]] },                                 // Фонтанка
-    { w:46,  p:[[59.9445,30.3350],[59.9420,30.3290],[59.9390,30.3230],[59.9355,30.3180],
-                [59.9320,30.3060],[59.9295,30.2950],[59.9280,30.2850],[59.9270,30.2760]] }, // Мойка
-    { w:34,  p:[[59.9420,30.3290],[59.9390,30.3270],[59.9350,30.3245],[59.9310,30.3170],
-                [59.9270,30.3080],[59.9230,30.3010],[59.9190,30.2920],[59.9160,30.2870]] }, // канал Грибоедова
-    { w:62,  p:[[59.9130,30.2610],[59.9110,30.2780],[59.9092,30.2980],[59.9082,30.3200],
-                [59.9080,30.3400],[59.9092,30.3600],[59.9112,30.3800],[59.9132,30.4000],
-                [59.9152,30.4200]] }                                                    // Обводный канал
-  ],
-  avenues: [
-    { w:38, p:[[59.9375,30.3095],[59.9355,30.3200],[59.9345,30.3250],[59.9335,30.3350],
-               [59.9325,30.3450],[59.9312,30.3600],[59.9295,30.3720],[59.9270,30.3820],
-               [59.9240,30.3890]] },                                                    // Невский
-    { w:34, p:[[59.9195,30.3195],[59.9100,30.3190],[59.9000,30.3195],[59.8900,30.3200],
-               [59.8800,30.3210],[59.8700,30.3215]] },                                  // Московский
-    { w:28, p:[[59.9370,30.3620],[59.9300,30.3580],[59.9220,30.3540],[59.9150,30.3500],
-               [59.9080,30.3450]] },                                                    // Лиговский
-    { w:30, p:[[59.9520,30.3190],[59.9580,30.3140],[59.9640,30.3090],[59.9700,30.3050],
-               [59.9760,30.3020]] },                                                    // Каменноостровский
-    { w:26, p:[[59.9490,30.2880],[59.9530,30.2960],[59.9570,30.3050],[59.9610,30.3140]] }, // Большой П.С.
-    { w:26, p:[[59.9340,30.2430],[59.9385,30.2570],[59.9420,30.2690],[59.9455,30.2810],
-               [59.9490,30.2920]] },                                                    // Средний В.О.
-    { w:26, p:[[59.9300,30.2480],[59.9340,30.2620],[59.9375,30.2740],[59.9410,30.2860],
-               [59.9445,30.2970]] },                                                    // Большой В.О.
-    { w:26, p:[[59.9480,30.3480],[59.9420,30.3470],[59.9360,30.3460],[59.9310,30.3450],
-               [59.9280,30.3400],[59.9250,30.3330],[59.9220,30.3270]] },                // Литейный — Владимирский — Загородный
-    { w:24, p:[[59.9430,30.3350],[59.9370,30.3260],[59.9310,30.3180],[59.9250,30.3060],
-               [59.9200,30.2980]] }                                                     // Садовая
-  ],
-  labels: [
-    { t:'ФИНСКИЙ ЗАЛИВ', at:[59.9180,30.2080], size:12, rot:0 },
-    { t:'НЕВА',          at:[59.9150,30.4470], size:15, rot:72 },
-    { t:'ВАСИЛЬЕВСКИЙ ОСТРОВ', at:[59.9330,30.2600], size:9,  rot:-27 },
-    { t:'ПЕТРОГРАДСКАЯ СТОРОНА', at:[59.9690,30.2810], size:9, rot:-8 },
-    { t:'ОБВОДНЫЙ КАНАЛ', at:[59.9048,30.3300], size:9, rot:2 }
-  ]
-};
-
-/* Презентационный макет: рисуем схему города вместо тайлов. */
+/* Карточки театров и официальный виджет Яндекс Карт без API-ключа. */
 (function () {
   const theaters = window.THEATERS;
   const mapEl = document.querySelector('#theater-map');
@@ -1702,156 +1487,19 @@ window.SPB = {
     grid.append(c);
   });
 
-  /* ---------- проекция ---------- */
-  const SVGNS = 'http://www.w3.org/2000/svg';
-  const rad = (d) => (d * Math.PI) / 180;
-
-  function world(lat, lon, z) {
-    const scale = 256 * 2 ** z;
-    const s = Math.sin(rad(lat));
-    return {
-      x: ((lon + 180) / 360) * scale,
-      y: (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * scale,
-    };
-  }
-
-  function draw() {
-    const W = mapEl.clientWidth;
-    const H = mapEl.clientHeight;
-    if (!W || !H) return;
-
-    const lats = theaters.map((t) => t.coordinates[0]);
-    const lons = theaters.map((t) => t.coordinates[1]);
-    const bounds = { n: Math.max(...lats), s: Math.min(...lats), e: Math.max(...lons), w: Math.min(...lons) };
-    const padX = W < 700 ? 46 : 110;
-    const padY = W < 700 ? 60 : 90;
-
-    let z = 9;
-    for (let test = 9; test <= 16; test += 0.05) {
-      const a = world(bounds.n, bounds.w, test);
-      const b = world(bounds.s, bounds.e, test);
-      if (b.x - a.x > W - padX * 2 || b.y - a.y > H - padY * 2) break;
-      z = test;
-    }
-
-    const cLat = (bounds.n + bounds.s) / 2;
-    const cLon = (bounds.e + bounds.w) / 2;
-    const centre = world(cLat, cLon, z);
-    const mpp = (156543.03392 * Math.cos(rad(cLat))) / 2 ** z;
-
-    const P = (lat, lon) => {
-      const p = world(lat, lon, z);
-      return [W / 2 + p.x - centre.x, H / 2 + p.y - centre.y];
-    };
-    const m = (metres) => Math.max(1, metres / mpp);
-
-    /* сглаженная линия по точкам */
-    function smooth(points) {
-      const pts = points.map(([la, lo]) => P(la, lo));
-      if (pts.length < 3) return `M ${pts.map((p) => p.join(' ')).join(' L ')}`;
-      let d = `M ${pts[0][0]} ${pts[0][1]}`;
-      for (let i = 1; i < pts.length - 1; i += 1) {
-        const mx = (pts[i][0] + pts[i + 1][0]) / 2;
-        const my = (pts[i][1] + pts[i + 1][1]) / 2;
-        d += ` Q ${pts[i][0]} ${pts[i][1]} ${mx} ${my}`;
-      }
-      const last = pts[pts.length - 1];
-      d += ` T ${last[0]} ${last[1]}`;
-      return d;
-    }
-
-    const svg = document.createElementNS(SVGNS, 'svg');
-    svg.setAttribute('class', 'plan');
-    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    svg.setAttribute('width', W);
-    svg.setAttribute('height', H);
-
-    const add = (tag, attrs) => {
-      const el = document.createElementNS(SVGNS, tag);
-      Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
-      svg.append(el);
-      return el;
-    };
-
-    /* суша */
-    add('rect', { x: 0, y: 0, width: W, height: H, fill: 'var(--plan-land)' });
-
-    /* мелкая сетка кварталов */
-    const step = Math.max(34, m(700));
-    for (let x = 0; x < W; x += step) add('line', { x1: x, y1: 0, x2: x, y2: H, stroke: 'var(--plan-grid)', 'stroke-width': 1 });
-    for (let y = 0; y < H; y += step) add('line', { x1: 0, y1: y, x2: W, y2: y, stroke: 'var(--plan-grid)', 'stroke-width': 1 });
-
-    /* залив */
-    add('polygon', {
-      points: window.SPB.gulf.map(([la, lo]) => P(la, lo).join(',')).join(' '),
-      fill: 'var(--plan-water)',
-    });
-
-    /* парки */
-    window.SPB.parks.forEach((p) => {
-      const [cx, cy] = P(p.c[0], p.c[1]);
-      add('ellipse', { cx, cy, rx: m(p.rx), ry: m(p.ry), fill: 'var(--plan-park)' });
-    });
-
-    /* улицы */
-    window.SPB.avenues.forEach((a) => {
-      const d = smooth(a.p);
-      add('path', {
-        d, fill: 'none', stroke: 'var(--plan-road-edge)',
-        'stroke-width': m(a.w) + 3.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
-      });
-      add('path', {
-        d, fill: 'none', stroke: 'var(--plan-road)',
-        'stroke-width': m(a.w), 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
-      });
-    });
-
-    /* реки */
-    window.SPB.rivers.forEach((r) => {
-      add('path', {
-        d: smooth(r.p), fill: 'none', stroke: 'var(--plan-water)',
-        'stroke-width': m(r.w), 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
-      });
-    });
-
-    /* подписи */
-    window.SPB.labels.forEach((l) => {
-      const [x, y] = P(l.at[0], l.at[1]);
-      const t = add('text', {
-        x, y, fill: 'var(--plan-label)', 'font-size': l.size, 'font-weight': 700,
-        'letter-spacing': 2.2, 'text-anchor': 'middle',
-        transform: `rotate(${l.rot} ${x} ${y})`,
-      });
-      t.textContent = l.t;
-    });
-
-    const layer = document.createElement('div');
-    layer.className = 'plan-markers';
-
-    theaters.forEach((t) => {
-      const [x, y] = P(t.coordinates[0], t.coordinates[1]);
-      const wrap = document.createElement('div');
-      wrap.className = 'marker';
-      wrap.style.cssText = `position:absolute;left:${x}px;top:${y}px`;
-      const pin = document.createElement('button');
-      pin.type = 'button'; pin.className = 'marker-pin';
-      pin.setAttribute('aria-label', `Открыть карточку: ${t.name}`);
-      pin.innerHTML = '<i></i>';
-      pin.addEventListener('click', () => openTheater(t));
-      const label = document.createElement('span');
-      label.className = 'marker-label';
-      label.textContent = t.name;
-      wrap.append(pin, label);
-      layer.append(wrap);
-    });
-
-    mapEl.replaceChildren(svg, layer);
-  }
-
-  draw();
-  document.querySelector('#map-status').hidden = true;
-  let timer;
-  window.addEventListener('resize', () => { clearTimeout(timer); timer = setTimeout(draw, 120); });
+  /* ---------- Яндекс Карта ---------- */
+  const points = theaters
+    .map((t) => `${t.coordinates[1]},${t.coordinates[0]},pm2rdm${t.id}`)
+    .join('~');
+  const params = new URLSearchParams({
+    ll: '30.3156,59.9389',
+    z: '12',
+    l: 'map',
+    pt: points,
+  });
+  const status = document.querySelector('#map-status');
+  mapEl.addEventListener('load', () => { status.hidden = true; }, { once: true });
+  mapEl.src = `https://yandex.ru/map-widget/v1/?${params.toString()}`;
 })();
 
     </script>
