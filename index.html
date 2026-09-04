@@ -516,6 +516,37 @@ footer img {
   opacity: 1;
 }
 
+.user-location {
+  position: absolute;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.user-location-dot {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  background: #2187ff;
+  border: 4px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 9px rgba(33, 135, 255, 0.2), 0 6px 18px rgba(14, 72, 139, 0.36);
+}
+
+.user-location-label {
+  padding: 7px 11px;
+  color: #102d52;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 999px;
+  box-shadow: 0 7px 20px rgba(26, 56, 91, 0.18);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .map-status {
   position: absolute;
   z-index: 8;
@@ -541,6 +572,55 @@ footer img {
   max-width: 460px;
   color: rgba(255, 255, 255, 0.62);
   line-height: 1.5;
+}
+
+/* Невидимая зона на штатной стрелке геолокации Яндекс Карты. */
+.map-geolocation {
+  position: absolute;
+  z-index: 7;
+  top: calc(50% + 10px);
+  right: 13px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.map-geolocation:focus-visible {
+  outline: 3px solid var(--red);
+  outline-offset: 2px;
+}
+
+.map-geolocation:disabled {
+  cursor: wait;
+}
+
+.location-message {
+  position: absolute;
+  z-index: 7;
+  top: calc(50% + 62px);
+  right: 13px;
+  max-width: min(330px, calc(100% - 26px));
+  padding: 10px 14px;
+  color: var(--black);
+  background: rgba(255, 250, 244, 0.97);
+  border: 1px solid rgba(89, 62, 50, 0.16);
+  border-radius: 14px;
+  box-shadow: 0 9px 28px rgba(52, 29, 20, 0.16);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.location-message.is-error {
+  color: #8d1720;
+}
+
+.location-message[hidden] {
+  display: none;
 }
 
 .map-zoom {
@@ -1153,6 +1233,22 @@ footer > span {
             <span>Загружаем Яндекс Карту</span>
           </div>
 
+          <button
+            class="map-geolocation"
+            id="map-geolocation"
+            type="button"
+            aria-label="Определить моё местоположение"
+            title="Моё местоположение"
+          ></button>
+
+          <div
+            class="location-message"
+            id="location-message"
+            role="status"
+            aria-live="polite"
+            hidden
+          ></div>
+
           <div class="map-zoom" aria-label="Масштаб карты">
             <button type="button" data-zoom="in" aria-label="Приблизить">+</button>
             <button type="button" data-zoom="out" aria-label="Отдалить">−</button>
@@ -1555,7 +1651,11 @@ window.THEATERS = [
   const mapFrame = document.querySelector('.map-frame');
   const markersEl = document.querySelector('#map-markers');
   const status = document.querySelector('#map-status');
-  const mapCenter = { lat: 59.926813, lon: 30.341358 };
+  const geolocationButton = document.querySelector('#map-geolocation');
+  const locationMessage = document.querySelector('#location-message');
+  let mapCenter = { lat: 59.926813, lon: 30.341358 };
+  let userLocation = null;
+  let locationMessageTimer;
   const rad = (degrees) => (degrees * Math.PI) / 180;
 
   function world(lat, lon, zoom) {
@@ -1575,6 +1675,14 @@ window.THEATERS = [
 
   let zoom = responsiveZoom();
   let useResponsiveZoom = true;
+
+  function showLocationMessage(message, isError = false) {
+    clearTimeout(locationMessageTimer);
+    locationMessage.textContent = message;
+    locationMessage.classList.toggle('is-error', isError);
+    locationMessage.hidden = false;
+    locationMessageTimer = setTimeout(() => { locationMessage.hidden = true; }, 5200);
+  }
 
   function setMapSource() {
     const params = new URLSearchParams({
@@ -1613,9 +1721,70 @@ window.THEATERS = [
       marker.append(pin, label);
       markersEl.append(marker);
     });
+
+    if (userLocation) {
+      const point = world(userLocation.lat, userLocation.lon, zoom);
+      const marker = document.createElement('div');
+      marker.className = 'user-location';
+      marker.style.left = `${width / 2 + point.x - center.x}px`;
+      marker.style.top = `${height / 2 + point.y - center.y}px`;
+
+      const dot = document.createElement('span');
+      dot.className = 'user-location-dot';
+      const label = document.createElement('span');
+      label.className = 'user-location-label';
+      label.textContent = 'Вы здесь';
+      marker.append(dot, label);
+      markersEl.append(marker);
+    }
+  }
+
+  function geolocationErrorMessage(error) {
+    if (error.code === error.PERMISSION_DENIED) {
+      return 'Доступ к геолокации запрещён. Разрешите его в настройках браузера и попробуйте снова.';
+    }
+    if (error.code === error.TIMEOUT) {
+      return 'Не удалось определить местоположение вовремя. Попробуйте ещё раз.';
+    }
+    return 'Местоположение сейчас недоступно. Проверьте геолокацию устройства и повторите попытку.';
   }
 
   mapEl.addEventListener('load', () => { status.hidden = true; });
+
+  geolocationButton.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      showLocationMessage('Этот браузер не поддерживает определение местоположения.', true);
+      return;
+    }
+
+    geolocationButton.disabled = true;
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        geolocationButton.disabled = false;
+
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+          showLocationMessage('Браузер вернул некорректные координаты. Попробуйте ещё раз.', true);
+          return;
+        }
+
+        userLocation = { lat, lon };
+        mapCenter = { ...userLocation };
+        zoom = 13;
+        useResponsiveZoom = false;
+        setMapSource();
+        renderMarkers();
+        showLocationMessage('Местоположение найдено — синяя точка показывает, где вы находитесь.');
+      },
+      (error) => {
+        geolocationButton.disabled = false;
+        showLocationMessage(geolocationErrorMessage(error), true);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  });
+
   document.querySelectorAll('[data-zoom]').forEach((button) => {
     button.addEventListener('click', () => {
       const delta = button.dataset.zoom === 'in' ? 1 : -1;
