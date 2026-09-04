@@ -543,43 +543,6 @@ footer img {
   line-height: 1.5;
 }
 
-.map-legend {
-  position: absolute;
-  z-index: 6;
-  left: 24px;
-  bottom: 28px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px 10px 10px;
-  background: rgba(255, 250, 244, 0.94);
-  border: 1px solid rgba(89, 62, 50, 0.14);
-  border-radius: 999px;
-  box-shadow: 0 8px 28px rgba(52, 29, 20, 0.14);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.map-legend b {
-  display: grid;
-  width: 26px;
-  height: 26px;
-  place-items: center;
-  background: var(--red);
-  border: 2px solid #fff8ef;
-  border-radius: 50% 50% 50% 8px;
-  transform: rotate(-45deg);
-  box-shadow: 0 3px 10px rgba(115, 17, 23, 0.35);
-}
-
-.map-legend b::after {
-  content: '';
-  width: 7px;
-  height: 7px;
-  background: white;
-  border-radius: 50%;
-}
-
 .map-zoom {
   position: absolute;
   z-index: 6;
@@ -889,7 +852,7 @@ footer > span {
 
 .performance-list a {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) 20px;
+  grid-template-columns: minmax(0, 1fr) 20px;
   align-items: center;
   gap: 10px;
   padding: 15px;
@@ -902,12 +865,6 @@ footer > span {
 .performance-list a:hover {
   border-color: var(--red);
   transform: translateY(-2px);
-}
-
-.performance-list a > span {
-  color: var(--red);
-  font-size: 12px;
-  font-weight: 900;
 }
 
 .performance-list strong {
@@ -931,13 +888,6 @@ footer > span {
 .all-tickets:hover {
   box-shadow: 0 14px 32px rgba(255, 61, 61, 0.38);
   transform: translateY(-2px);
-}
-
-.drawer-note {
-  margin: -22px 0 0;
-  color: #94877d;
-  font-size: 12px;
-  text-align: center;
 }
 
 /* ============================================================
@@ -1070,13 +1020,6 @@ footer > span {
     border-radius: 24px;
   }
 
-  .map-legend {
-    right: 74px;
-    bottom: 20px;
-    left: 14px;
-    font-size: 12px;
-  }
-
   .map-zoom {
     right: 14px;
     bottom: 44px;
@@ -1153,7 +1096,7 @@ footer > span {
             на сегодняшний вечер.
           </p>
           <div class="hero-actions">
-            <a class="hero-button" href="#map">Открыть карту <span>⌖</span></a>
+            <a class="hero-button" href="#map">Открыть карту</a>
             <a class="hero-link" href="#stages">Список всех театров</a>
           </div>
         </div>
@@ -1210,8 +1153,6 @@ footer > span {
             <span>Загружаем Яндекс Карту</span>
           </div>
 
-          <div class="map-legend"><b></b> Театр — нажмите, чтобы открыть афишу</div>
-
           <div class="map-zoom" aria-label="Масштаб карты">
             <button type="button" data-zoom="in" aria-label="Приблизить">+</button>
             <button type="button" data-zoom="out" aria-label="Отдалить">−</button>
@@ -1240,7 +1181,7 @@ footer > span {
           культурные площадки. В каждой карточке — короткая история и три
           спектакля, которые выбирают зрители.
         </p>
-        <a href="#map">Открыть карту <span>⌖</span></a>
+        <a href="#map">Открыть карту</a>
       </section>
     </main>
 
@@ -1276,7 +1217,6 @@ footer > span {
         <a class="all-tickets" id="all-tickets" target="_blank" rel="noreferrer">
           Все билеты театра <b>↗</b>
         </a>
-        <p class="drawer-note">Ссылка откроется на сайте Горбилета в новой вкладке.</p>
       </div>
     </aside>
     <script>
@@ -1574,14 +1514,14 @@ window.THEATERS = [
   /* ---------- карточка ---------- */
   function openTheater(t) {
     document.querySelector('#drawer-title').textContent = t.name;
-    document.querySelector('#drawer-address').textContent = `⌖ ${t.address}`;
+    document.querySelector('#drawer-address').textContent = t.address;
     document.querySelector('#drawer-description').textContent = t.description;
     const list = document.querySelector('#performance-list');
     list.replaceChildren();
-    t.performances.forEach((p, i) => {
+    t.performances.forEach((p) => {
       const a = document.createElement('a');
       a.href = p.url; a.target = '_blank'; a.rel = 'noreferrer';
-      a.innerHTML = `<span>${String(i + 1).padStart(2, '0')}</span><strong></strong><b>↗</b>`;
+      a.innerHTML = '<strong></strong><b>↗</b>';
       a.querySelector('strong').textContent = p.title;
       list.append(a);
     });
