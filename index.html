@@ -478,9 +478,9 @@ footer img {
 
 .marker {
   position: absolute;
-  display: flex;
-  align-items: center;
-  gap: 9px;
+  display: block;
+  width: 34px;
+  height: 34px;
   padding: 0;
   color: inherit;
   background: transparent;
@@ -489,16 +489,12 @@ footer img {
   cursor: pointer;
   font: inherit;
   pointer-events: auto;
-  white-space: nowrap;
   transform: translate(-17px, -34px);
 }
 
-.marker--left {
-  flex-direction: row-reverse;
-  transform: translate(calc(-100% + 17px), -34px);
-}
-
 .marker-pin {
+  position: relative;
+  z-index: 3;
   display: grid;
   width: 34px;
   height: 34px;
@@ -523,19 +519,27 @@ footer img {
 }
 
 .marker-label {
-  max-width: 0;
-  padding: 0;
-  overflow: hidden;
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 44px;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(420px, calc(100vw - 72px));
+  padding: 9px 14px;
   color: var(--black);
   background: var(--paper-light);
-  border-radius: 999px;
+  border-radius: 16px;
   box-shadow: 0 8px 22px rgba(52, 29, 20, 0.2);
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 800;
+  line-height: 1.22;
+  overflow-wrap: anywhere;
+  white-space: normal;
   opacity: 0;
   pointer-events: none;
-  transition: max-width 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease,
-    padding 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  visibility: hidden;
+  transition: opacity 160ms ease, visibility 0s linear 160ms;
 }
 
 .marker:hover,
@@ -552,9 +556,10 @@ footer img {
 
 .marker:hover .marker-label,
 .marker:focus-within .marker-label {
-  max-width: min(260px, 54vw);
-  padding: 8px 14px;
   opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+  transition-delay: 0s;
 }
 
 .user-location {
@@ -1843,6 +1848,8 @@ const externalArrowIcon = '<svg class="external-arrow" viewBox="0 0 16 16" aria-
     if (!width || !height) return;
 
     const center = world(mapCenter.lat, mapCenter.lon, zoom);
+    const edgePadding = 12;
+    const labelGap = -4;
     markersEl.replaceChildren();
 
     theaters.forEach((t) => {
@@ -1854,7 +1861,6 @@ const externalArrowIcon = '<svg class="external-arrow" viewBox="0 0 16 16" aria-
       const marker = document.createElement('button');
       marker.type = 'button';
       marker.className = 'marker';
-      if (x > width - 300) marker.classList.add('marker--left');
       marker.style.left = `${x}px`;
       marker.style.top = `${y}px`;
       marker.setAttribute('aria-label', `Открыть карточку: ${t.name}`);
@@ -1868,6 +1874,36 @@ const externalArrowIcon = '<svg class="external-arrow" viewBox="0 0 16 16" aria-
       label.textContent = t.name;
       marker.append(pin, label);
       markersEl.append(marker);
+
+      const maxLabelWidth = Math.max(0, width - edgePadding * 2);
+      const naturalLabelWidth = label.getBoundingClientRect().width;
+      const labelWidth = Math.min(Math.ceil(naturalLabelWidth) + 2, maxLabelWidth);
+      label.style.width = `${labelWidth}px`;
+
+      const labelHeight = label.offsetHeight;
+      const markerLeft = x - 17;
+      const markerTop = y - 34;
+      const preferredRight = x + 17 + labelGap;
+      const preferredLeft = x - 17 - labelGap - labelWidth;
+      let labelX;
+
+      if (preferredRight + labelWidth <= width - edgePadding) {
+        labelX = preferredRight;
+      } else if (preferredLeft >= edgePadding) {
+        labelX = preferredLeft;
+      } else {
+        labelX = Math.max(
+          edgePadding,
+          Math.min(x - labelWidth / 2, width - edgePadding - labelWidth)
+        );
+      }
+
+      const labelY = Math.max(
+        edgePadding,
+        Math.min(y - 17 - labelHeight / 2, height - edgePadding - labelHeight)
+      );
+      label.style.left = `${labelX - markerLeft}px`;
+      label.style.top = `${labelY - markerTop}px`;
     });
 
     if (userLocation) {
