@@ -16,7 +16,7 @@
   --paper: #f7f1e9;
   --paper-light: #fffaf4;
   --gray: #7e746d;
-  font-family: Inter, Arial, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   color: var(--black);
   background: var(--paper);
 }
@@ -32,6 +32,9 @@ html {
 body {
   margin: 0;
   overflow-x: hidden;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
   background:
     repeating-linear-gradient(0deg, transparent 0 47px, rgba(72, 52, 39, 0.055) 48px),
     var(--paper);
@@ -422,6 +425,7 @@ footer img {
   min-height: 610px;
   margin: 0 auto;
   overflow: hidden;
+  overflow: clip;
   background: #d7cec3;
   border: 1px solid rgba(71, 51, 40, 0.18);
   border-radius: 34px;
@@ -430,14 +434,15 @@ footer img {
 
 .map-canvas {
   position: absolute;
-  z-index: 1; /* собственный контекст наложения, иначе легенда уедет под слои карты */
-  inset: 0;
+  z-index: 1;
+  inset: -110px;
   display: block;
-  width: 100%;
-  height: 100%;
+  width: calc(100% + 220px);
+  height: calc(100% + 220px);
   border: 0;
   isolation: isolate;
   pointer-events: none;
+  will-change: transform;
 }
 
 .map-markers {
@@ -445,6 +450,30 @@ footer img {
   z-index: 4;
   inset: 0;
   pointer-events: none;
+  will-change: transform;
+}
+
+.map-interaction {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  cursor: grab;
+  touch-action: none;
+}
+
+.map-interaction:focus-visible {
+  outline: 3px solid var(--red);
+  outline-offset: -5px;
+}
+
+.map-frame.is-dragging .map-interaction {
+  cursor: grabbing;
+}
+
+.map-frame.is-dragging .map-canvas,
+.map-frame.is-dragging .map-markers {
+  transition: none;
+  user-select: none;
 }
 
 .marker {
@@ -452,9 +481,21 @@ footer img {
   display: flex;
   align-items: center;
   gap: 9px;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
   pointer-events: auto;
   white-space: nowrap;
-  transform: translate(-50%, -100%);
+  transform: translate(-17px, -34px);
+}
+
+.marker--left {
+  flex-direction: row-reverse;
+  transform: translate(calc(-100% + 17px), -34px);
 }
 
 .marker-pin {
@@ -468,7 +509,7 @@ footer img {
   border: 3px solid #fff8ef;
   border-radius: 50% 50% 50% 12px;
   box-shadow: 0 7px 20px rgba(115, 17, 23, 0.46);
-  cursor: pointer;
+  pointer-events: none;
   transform: rotate(-45deg);
   transition: transform 170ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 170ms ease;
 }
@@ -503,7 +544,7 @@ footer img {
 }
 
 .marker:hover .marker-pin,
-.marker-pin:focus-visible {
+.marker:focus-visible .marker-pin {
   outline: none;
   box-shadow: 0 9px 26px rgba(115, 17, 23, 0.62), 0 0 0 4px white;
   transform: rotate(-45deg) scale(1.13);
@@ -574,35 +615,11 @@ footer img {
   line-height: 1.5;
 }
 
-/* Невидимая зона на штатной стрелке геолокации Яндекс Карты. */
-.map-geolocation {
-  position: absolute;
-  z-index: 7;
-  top: calc(50% + 10px);
-  right: 13px;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  background: transparent;
-  border: 0;
-  border-radius: 12px;
-  cursor: pointer;
-}
-
-.map-geolocation:focus-visible {
-  outline: 3px solid var(--red);
-  outline-offset: 2px;
-}
-
-.map-geolocation:disabled {
-  cursor: wait;
-}
-
 .location-message {
   position: absolute;
   z-index: 7;
-  top: calc(50% + 62px);
-  right: 13px;
+  right: 24px;
+  bottom: 188px;
   max-width: min(330px, calc(100% - 26px));
   padding: 10px 14px;
   color: var(--black);
@@ -623,9 +640,9 @@ footer img {
   display: none;
 }
 
-.map-zoom {
+.map-controls {
   position: absolute;
-  z-index: 6;
+  z-index: 7;
   right: 24px;
   bottom: 28px;
   display: grid;
@@ -636,7 +653,7 @@ footer img {
   box-shadow: 0 8px 28px rgba(52, 29, 20, 0.14);
 }
 
-.map-zoom button {
+.map-controls button {
   width: 44px;
   height: 44px;
   padding: 0;
@@ -644,18 +661,61 @@ footer img {
   background: none;
   border: 0;
   cursor: pointer;
-  font: 700 22px/1 Inter, Arial, sans-serif;
+  font: 700 22px/1 Arial, Helvetica, sans-serif;
   transition: background 150ms ease, color 150ms ease;
 }
 
-.map-zoom button:first-child {
+.map-controls button:not(:last-child) {
   border-bottom: 1px solid rgba(89, 62, 50, 0.14);
 }
 
-.map-zoom button:hover,
-.map-zoom button:focus-visible {
+.map-controls button:hover,
+.map-controls button:focus-visible {
   color: white;
   background: var(--red);
+  outline: none;
+}
+
+.map-controls button:disabled {
+  color: rgba(21, 17, 17, 0.3);
+  cursor: default;
+}
+
+.map-controls button:disabled:hover {
+  color: rgba(21, 17, 17, 0.3);
+  background: none;
+}
+
+.map-controls .map-geolocation {
+  display: grid;
+  place-items: center;
+}
+
+.map-geolocation svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.map-attribution {
+  position: absolute;
+  z-index: 7;
+  bottom: 20px;
+  left: 20px;
+  padding: 8px 11px;
+  color: #514943;
+  background: rgba(255, 250, 244, 0.94);
+  border: 1px solid rgba(89, 62, 50, 0.13);
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(52, 29, 20, 0.13);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.map-attribution:hover,
+.map-attribution:focus-visible {
+  color: var(--red);
   outline: none;
 }
 
@@ -708,6 +768,8 @@ footer img {
   font-weight: 700;
   line-height: 1.25;
   letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 .stage-card em {
@@ -717,6 +779,7 @@ footer img {
   font-size: 13px;
   font-style: normal;
   font-weight: 500;
+  overflow-wrap: anywhere;
 }
 
 .stage-go {
@@ -847,7 +910,7 @@ footer > span {
   z-index: 1001;
   top: 0;
   right: 0;
-  width: min(540px, 100%);
+  width: min(620px, 100%);
   height: 100dvh;
   overflow-y: auto;
   background: var(--paper-light);
@@ -914,9 +977,15 @@ footer > span {
 
 .drawer-head h2 {
   margin: 12px 0 14px;
-  font-size: clamp(34px, 6vw, 52px);
-  line-height: 0.98;
-  letter-spacing: -0.045em;
+  font-size: clamp(34px, 4.2vw, 48px);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+.drawer-head h2.is-long-title {
+  font-size: clamp(30px, 3.5vw, 41px);
 }
 
 .drawer-head p {
@@ -996,6 +1065,12 @@ footer > span {
   .ticket {
     width: min(470px, 100%);
     margin-top: 6px;
+  }
+}
+
+@media (max-width: 1399px) and (min-width: 901px) {
+  .stage-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1114,9 +1189,19 @@ footer > span {
     border-radius: 24px;
   }
 
-  .map-zoom {
+  .map-controls {
     right: 14px;
     bottom: 44px;
+  }
+
+  .location-message {
+    right: 14px;
+    bottom: 204px;
+  }
+
+  .map-attribution {
+    bottom: 14px;
+    left: 14px;
   }
 
   .stage-card {
@@ -1187,7 +1272,7 @@ footer > span {
           <h1>Театральная<br />карта Петербурга</h1>
           <p>
             Выбирайте сцену на карте, читайте её историю и находите спектакль
-            на сегодняшний вечер.
+            на вечер
           </p>
           <div class="hero-actions">
             <a class="hero-button" href="#map">Открыть карту</a>
@@ -1242,18 +1327,17 @@ footer > span {
             aria-label="Метки театров"
           ></div>
 
+          <div
+            class="map-interaction"
+            id="map-interaction"
+            tabindex="0"
+            aria-label="Карта: перетаскивайте для перемещения, используйте колёсико или кнопки для масштаба"
+          ></div>
+
           <div class="map-status" id="map-status" role="status">
             <strong>Поднимаем занавес…</strong>
             <span>Загружаем Яндекс Карту</span>
           </div>
-
-          <button
-            class="map-geolocation"
-            id="map-geolocation"
-            type="button"
-            aria-label="Определить моё местоположение"
-            title="Моё местоположение"
-          ></button>
 
           <div
             class="location-message"
@@ -1263,10 +1347,29 @@ footer > span {
             hidden
           ></div>
 
-          <div class="map-zoom" aria-label="Масштаб карты">
+          <div class="map-controls" aria-label="Управление картой">
             <button type="button" data-zoom="in" aria-label="Приблизить">+</button>
             <button type="button" data-zoom="out" aria-label="Отдалить">−</button>
+            <button
+              class="map-geolocation"
+              id="map-geolocation"
+              type="button"
+              aria-label="Определить моё местоположение"
+              title="Моё местоположение"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M20.8 3.2 3.9 10.4c-1.2.5-1.1 2.2.2 2.5l6.1 1.3 1.3 6.1c.3 1.3 2 1.4 2.5.2l7.2-16.9c.1-.3-.1-.5-.4-.4Z"></path>
+              </svg>
+            </button>
           </div>
+
+          <a
+            class="map-attribution"
+            id="map-attribution"
+            href="https://yandex.ru/maps/2/saint-petersburg/"
+            target="_blank"
+            rel="noreferrer"
+          >Яндекс Карты</a>
 
         </div>
       </section>
@@ -1276,10 +1379,6 @@ footer > span {
           <div>
             <h2 id="stages-title">Все сцены списком</h2>
           </div>
-          <p>
-            Академические залы, камерные подвалы и дворцы культуры — двадцать
-            площадок города. Нажмите на строку, чтобы открыть карточку.
-          </p>
         </div>
         <div class="stage-grid" id="stage-grid"></div>
       </section>
@@ -1325,7 +1424,7 @@ footer > span {
           <div class="performance-list" id="performance-list"></div>
         </section>
         <a class="all-tickets" id="all-tickets" target="_blank" rel="noreferrer">
-          Все билеты театра
+          Весь репертуар театра
           <svg class="external-arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
             <path d="M4 12 12 4M6 4h6v6"></path>
           </svg>
@@ -1560,7 +1659,7 @@ window.THEATERS = [
   },
   {
     id: 17,
-    name: 'Дом культуры Выборгский',
+    name: 'Выборгский дворец',
     address: 'ул. Комиссара Смирнова, 15, литер А',
     coordinates: [59.963052, 30.348378],
     url: 'https://gorbilet.ru/go/JH2oTG',
@@ -1628,7 +1727,9 @@ const externalArrowIcon = '<svg class="external-arrow" viewBox="0 0 16 16" aria-
 
   /* ---------- карточка ---------- */
   function openTheater(t) {
-    document.querySelector('#drawer-title').textContent = t.name;
+    const drawerTitle = document.querySelector('#drawer-title');
+    drawerTitle.textContent = t.name;
+    drawerTitle.classList.toggle('is-long-title', t.name.length > 28);
     document.querySelector('#drawer-address').textContent = t.address;
     document.querySelector('#drawer-description').textContent = t.description;
     const list = document.querySelector('#performance-list');
@@ -1669,21 +1770,36 @@ const externalArrowIcon = '<svg class="external-arrow" viewBox="0 0 16 16" aria-
   /* ---------- Яндекс Карта и кликабельные метки ---------- */
   const mapFrame = document.querySelector('.map-frame');
   const markersEl = document.querySelector('#map-markers');
+  const interactionEl = document.querySelector('#map-interaction');
   const status = document.querySelector('#map-status');
   const geolocationButton = document.querySelector('#map-geolocation');
   const locationMessage = document.querySelector('#location-message');
+  const attribution = document.querySelector('#map-attribution');
+  const zoomButtons = [...document.querySelectorAll('[data-zoom]')];
+  const minZoom = 9;
+  const maxZoom = 18;
   let mapCenter = { lat: 59.926813, lon: 30.341358 };
   let userLocation = null;
   let locationMessageTimer;
+  let dragState = null;
+  let lastWheelZoom = 0;
   const rad = (degrees) => (degrees * Math.PI) / 180;
 
   function world(lat, lon, zoom) {
     const scale = 256 * 2 ** zoom;
-    const sine = Math.sin(rad(lat));
+    const sine = Math.max(-0.9999, Math.min(0.9999, Math.sin(rad(lat))));
     return {
       x: ((lon + 180) / 360) * scale,
       y: (0.5 - Math.log((1 + sine) / (1 - sine)) / (4 * Math.PI)) * scale,
     };
+  }
+
+  function coordinatesFromWorld(x, y, zoom) {
+    const scale = 256 * 2 ** zoom;
+    const lon = (x / scale) * 360 - 180;
+    const mercator = Math.PI - (2 * Math.PI * y) / scale;
+    const lat = (180 / Math.PI) * Math.atan(Math.sinh(mercator));
+    return { lat: Math.max(-85, Math.min(85, lat)), lon };
   }
 
   function responsiveZoom() {
@@ -1703,14 +1819,22 @@ const externalArrowIcon = '<svg class="external-arrow" viewBox="0 0 16 16" aria-
     locationMessageTimer = setTimeout(() => { locationMessage.hidden = true; }, 5200);
   }
 
-  function setMapSource() {
+  function updateZoomControls() {
+    zoomButtons.forEach((button) => {
+      button.disabled = button.dataset.zoom === 'in' ? zoom >= maxZoom : zoom <= minZoom;
+    });
+  }
+
+  function setMapSource(showLoading = false) {
     const params = new URLSearchParams({
       ll: `${mapCenter.lon},${mapCenter.lat}`,
       z: String(zoom),
       l: 'map',
     });
-    status.hidden = false;
+    if (showLoading) status.hidden = false;
     mapEl.src = `https://yandex.ru/map-widget/v1/?${params.toString()}`;
+    attribution.href = `https://yandex.ru/maps/?ll=${mapCenter.lon}%2C${mapCenter.lat}&z=${zoom}&l=map`;
+    updateZoomControls();
   }
 
   function renderMarkers() {
@@ -1723,16 +1847,21 @@ const externalArrowIcon = '<svg class="external-arrow" viewBox="0 0 16 16" aria-
 
     theaters.forEach((t) => {
       const point = world(t.coordinates[0], t.coordinates[1], zoom);
-      const marker = document.createElement('div');
-      marker.className = 'marker';
-      marker.style.left = `${width / 2 + point.x - center.x}px`;
-      marker.style.top = `${height / 2 + point.y - center.y}px`;
+      const x = width / 2 + point.x - center.x;
+      const y = height / 2 + point.y - center.y;
+      if (x < -320 || x > width + 320 || y < -80 || y > height + 80) return;
 
-      const pin = document.createElement('button');
-      pin.type = 'button';
+      const marker = document.createElement('button');
+      marker.type = 'button';
+      marker.className = 'marker';
+      if (x > width - 300) marker.classList.add('marker--left');
+      marker.style.left = `${x}px`;
+      marker.style.top = `${y}px`;
+      marker.setAttribute('aria-label', `Открыть карточку: ${t.name}`);
+      marker.addEventListener('click', () => openTheater(t));
+
+      const pin = document.createElement('span');
       pin.className = 'marker-pin';
-      pin.setAttribute('aria-label', `Открыть карточку: ${t.name}`);
-      pin.addEventListener('click', () => openTheater(t));
 
       const label = document.createElement('span');
       label.className = 'marker-label';
@@ -1768,7 +1897,40 @@ const externalArrowIcon = '<svg class="external-arrow" viewBox="0 0 16 16" aria-
     return 'Местоположение сейчас недоступно. Проверьте геолокацию устройства и повторите попытку.';
   }
 
-  mapEl.addEventListener('load', () => { status.hidden = true; });
+  function changeZoom(delta) {
+    const nextZoom = Math.min(maxZoom, Math.max(minZoom, zoom + delta));
+    if (nextZoom === zoom) return;
+    zoom = nextZoom;
+    useResponsiveZoom = false;
+    setMapSource();
+    renderMarkers();
+  }
+
+  function clearPanPreview() {
+    mapEl.style.transform = '';
+    markersEl.style.transform = '';
+  }
+
+  function previewPan(dx, dy) {
+    const transform = `translate3d(${dx}px, ${dy}px, 0)`;
+    mapEl.style.transform = transform;
+    markersEl.style.transform = transform;
+  }
+
+  function panByPixels(dx, dy) {
+    const center = world(mapCenter.lat, mapCenter.lon, zoom);
+    mapCenter = coordinatesFromWorld(center.x - dx, center.y - dy, zoom);
+    useResponsiveZoom = false;
+    clearPanPreview();
+    setMapSource();
+    renderMarkers();
+  }
+
+  const mapStatusFallback = setTimeout(() => { status.hidden = true; }, 4500);
+  mapEl.addEventListener('load', () => {
+    clearTimeout(mapStatusFallback);
+    status.hidden = true;
+  });
 
   geolocationButton.addEventListener('click', () => {
     if (!navigator.geolocation) {
@@ -1790,7 +1952,7 @@ const externalArrowIcon = '<svg class="external-arrow" viewBox="0 0 16 16" aria-
 
         userLocation = { lat, lon };
         mapCenter = { ...userLocation };
-        zoom = 13;
+        zoom = 14;
         useResponsiveZoom = false;
         setMapSource();
         renderMarkers();
@@ -1804,19 +1966,78 @@ const externalArrowIcon = '<svg class="external-arrow" viewBox="0 0 16 16" aria-
     );
   });
 
-  document.querySelectorAll('[data-zoom]').forEach((button) => {
+  zoomButtons.forEach((button) => {
     button.addEventListener('click', () => {
-      const delta = button.dataset.zoom === 'in' ? 1 : -1;
-      const nextZoom = Math.min(13, Math.max(10, zoom + delta));
-      if (nextZoom === zoom) return;
-      zoom = nextZoom;
-      useResponsiveZoom = false;
-      setMapSource();
-      renderMarkers();
+      changeZoom(button.dataset.zoom === 'in' ? 1 : -1);
     });
   });
 
-  setMapSource();
+  interactionEl.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    dragState = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      dx: 0,
+      dy: 0,
+    };
+    interactionEl.setPointerCapture(event.pointerId);
+    mapFrame.classList.add('is-dragging');
+  });
+
+  interactionEl.addEventListener('pointermove', (event) => {
+    if (!dragState || dragState.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    dragState.dx = Math.max(-190, Math.min(190, event.clientX - dragState.startX));
+    dragState.dy = Math.max(-190, Math.min(190, event.clientY - dragState.startY));
+    previewPan(dragState.dx, dragState.dy);
+  });
+
+  function finishPan(event, applyMovement) {
+    if (!dragState || dragState.pointerId !== event.pointerId) return;
+    const { dx, dy } = dragState;
+    dragState = null;
+    mapFrame.classList.remove('is-dragging');
+    if (interactionEl.hasPointerCapture(event.pointerId)) {
+      interactionEl.releasePointerCapture(event.pointerId);
+    }
+    if (applyMovement && Math.hypot(dx, dy) > 3) panByPixels(dx, dy);
+    else clearPanPreview();
+  }
+
+  interactionEl.addEventListener('pointerup', (event) => finishPan(event, true));
+  interactionEl.addEventListener('pointercancel', (event) => finishPan(event, false));
+
+  interactionEl.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    const now = Date.now();
+    if (now - lastWheelZoom < 150) return;
+    lastWheelZoom = now;
+    changeZoom(event.deltaY < 0 ? 1 : -1);
+  }, { passive: false });
+
+  interactionEl.addEventListener('dblclick', (event) => {
+    event.preventDefault();
+    changeZoom(1);
+  });
+
+  interactionEl.addEventListener('keydown', (event) => {
+    const actions = {
+      ArrowLeft: () => panByPixels(90, 0),
+      ArrowRight: () => panByPixels(-90, 0),
+      ArrowUp: () => panByPixels(0, 90),
+      ArrowDown: () => panByPixels(0, -90),
+      '+': () => changeZoom(1),
+      '=': () => changeZoom(1),
+      '-': () => changeZoom(-1),
+    };
+    if (!actions[event.key]) return;
+    event.preventDefault();
+    actions[event.key]();
+  });
+
+  setMapSource(true);
   renderMarkers();
 
   let resizeTimer;
